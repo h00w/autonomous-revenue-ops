@@ -7,7 +7,7 @@
 [![Dataset](https://img.shields.io/badge/Hugging%20Face-Dataset-FFD21E?logo=huggingface&logoColor=000)](https://huggingface.co/datasets/h0000w/autonomous-revenue-ops)
 [![System Card](https://img.shields.io/badge/Hugging%20Face-System%20Card-FFD21E?logo=huggingface&logoColor=000)](https://huggingface.co/h0000w/autonomous-revenue-ops)
 
-**Proof chain:** GitHub source → typed production API → multi-model structured reasoning → deterministic policy → durable workflow state → authenticated ingress → bounded/recoverable execution → regression/evaluation gates → reviewer Space → Hugging Face publication.
+**Proof chain:** GitHub source → typed production API → multi-model structured reasoning → deterministic policy → durable workflow state → authenticated ingress → bounded/recoverable execution → dataset-driven release gates → CI evidence artifact → reviewer Space → Hugging Face publication.
 
 ## Project phase
 
@@ -19,10 +19,11 @@
 | Phase 3 — Multi-model AI & agent layer | ✅ Contract-complete · 🔬 live validation pending | OpenAI, Anthropic, Gemini REST adapters; governed Research/Qualification/Outreach agents; 55/55 tests; benchmark 6/6 |
 | Phase 4 — Workflow orchestration | ✅ Contract-complete | explicit state machine, idempotent runs, human/research checkpoints, n8n REST/template contracts; 65/65 tests; benchmark 6/6 |
 | Phase 5 — Reliability, recovery & security | ✅ Contract-complete | SQLite restart persistence, optimistic revisions, leases/claims, recovery, retry/circuit/DLQ, API auth, signed replay-resistant webhooks; 78/78 tests; benchmark 6/6 |
-| Phase 6 — Agent/model evaluation & release gates | ⏭ Next | dataset-driven agent quality, policy-safety, structured-output, routing and prompt-regression release gates |
-| Phases 7–10 | Planned | operational analytics → deployment/SLOs → public proof → live-provider production validation |
+| Phase 6 — Agent/model evaluation & release gates | ✅ Deterministic release-gate complete · 🔬 live model eval pending | 7-case supervisor evaluation; 100% contract metrics; 0 policy violations; prompt manifest; CI artifact; 82/82 tests; benchmark 6/6 |
+| Phase 7 — Operational analytics & business impact | ⏭ Next | telemetry, funnel/intervention/reliability metrics, cost/time accounting, measured-vs-scenario business impact |
+| Phases 8–10 | Planned | deployment/SLOs → public proof → live-provider production validation |
 
-The evidence boundary is explicit: Phases 2–5 are implementation- and contract-tested. Phase 5 establishes **restart-safe single-host workflow durability**, not distributed HA. Live SaaS/model capability validation, production deployment/SLO evidence, and any multi-replica shared-database validation remain required before a final **Production Validated** claim.
+The evidence boundary is explicit: Phases 2–6 are implementation- and contract-tested. Phase 5 establishes **restart-safe single-host workflow durability**, not distributed HA. Phase 6's 100% metrics are **deterministic software/governance release-gate evidence**, not live-model quality claims. Live SaaS/model capability validation, production deployment/SLO evidence, and any multi-replica shared-database validation remain required before a final **Production Validated** claim.
 
 ## System flow
 
@@ -54,6 +55,15 @@ Inbound lead / signed SaaS webhook / n8n
   → explicit execution receipt
   → COMPLETED / FAILED
   → persisted recovery evidence
+
+Release path:
+  prompt/schema/agent/policy change
+  → full regression suite
+  → 6/6 policy benchmark
+  → 7-case deterministic supervisor release gate
+  → prompt ID/version/SHA manifest verification
+  → agent-eval-report.json CI artifact
+  → merge only when green
 ```
 
 **AI may propose. Software validates. Policy authorizes. Durable workflow state gates execution. Bounded adapters execute. Explicit evidence determines completion.**
@@ -93,14 +103,36 @@ Inbound lead / signed SaaS webhook / n8n
 | HMAC webhook verification + replay protection | `src/security/webhooks.py`, `src/security/api.py` |
 | Workflow REST API | `src/orchestration/api.py` |
 | n8n reference workflow | `n8n/lead-intake.workflow.json` |
-| Regression/failure/security tests | `tests/` — 78 passing at Phase 5 merge |
+| Deterministic agent release dataset | `data/agent_eval_cases.jsonl` — 7 cases / all 5 policy outcomes |
+| Agent release gate | `evals/agent_release_gate.py` — all required rates 100%, policy violations 0 |
+| Prompt change-control manifest | `evals/prompt_manifest.json` |
+| Version-controlled release thresholds | `evals/release_thresholds.json` |
+| Opt-in live provider agent evaluation | `evals/live_agent_eval.py` |
+| Regression/failure/security/eval tests | `tests/` — 82 passing at Phase 6 merge |
 | Policy benchmark | `evals/benchmark.py` — 6/6 |
 | SaaS live-validation harness | `scripts/integration_smoke.py` |
 | AI-provider validation harness | `scripts/ai_provider_smoke.py` |
 | Workflow smoke harness | `scripts/workflow_smoke.py` |
 | Reliability/security smoke | `scripts/reliability_smoke.py` — zero network calls |
-| CI | `.github/workflows/ci.yml` |
+| CI evidence artifact | `agent-eval-report.json` uploaded by `.github/workflows/ci.yml` |
 | HF publication | `.github/workflows/hf-sync.yml` |
+
+## Phase 6 deterministic release metrics
+
+The required CI release gate currently reports:
+
+| Metric | Result |
+| --- | ---: |
+| Structured-output success | 100% |
+| Deterministic decision accuracy | 100% |
+| Outreach/authorization agreement | 100% |
+| Agent/routing trace integrity | 100% |
+| Prompt untrusted-data boundary integrity | 100% |
+| Prompt manifest match | yes |
+| Policy violations | 0 |
+| Evaluation cases | 7 |
+
+These are deterministic contract metrics using the production supervisor with a deterministic structured provider. They are intentionally **not** described as OpenAI, Anthropic, or Gemini accuracy.
 
 ## Governed policy demo
 
@@ -125,7 +157,7 @@ cp .env.example .env
 uvicorn src.api:app --reload --host 0.0.0.0 --port 8000
 ```
 
-Phase 5 defaults workflow persistence to `data/workflows.sqlite3`; runtime SQLite/WAL/SHM files and local `.env` files are excluded by `.gitignore`.
+Phase 5+ defaults workflow persistence to `data/workflows.sqlite3`; runtime SQLite/WAL/SHM files, local `.env` files, and locally generated `agent-eval-report.json` are excluded by `.gitignore`.
 
 Endpoints include:
 
@@ -148,7 +180,24 @@ Endpoints include:
 make verify
 ```
 
-CI compiles source/scripts, runs the full regression/failure/security test suite and policy benchmark, and verifies that SaaS, AI-provider, workflow, and reliability/security smoke commands remain side-effect free by default.
+CI compiles source/scripts/evals, runs the full regression/failure/security suite, the deterministic policy benchmark, the Phase 6 multi-agent release gate, and every dry-run smoke harness. It also uploads the deterministic agent-evaluation report as build evidence.
+
+## Deterministic vs live evaluation
+
+Run the required deterministic release gate locally:
+
+```bash
+python evals/agent_release_gate.py --report agent-eval-report.json
+```
+
+Live-provider agent evaluation remains opt-in:
+
+```bash
+python evals/live_agent_eval.py openai
+python evals/live_agent_eval.py openai --execute --report openai-live-eval.json
+```
+
+Without `--execute`, the OpenAI, Anthropic, and Gemini live-eval harnesses make zero external calls. A retained live report must be tied to the exact provider/model, commit, prompts and dataset before it is used as model-quality evidence.
 
 ## Live capability validation
 
@@ -194,6 +243,11 @@ Use `--execute` only where supported and only with dedicated sandbox/test creden
 - [Recovery runbook](docs/recovery-runbook.md)
 - [Phase 5 completion gates](docs/phase-5-completion.md)
 
+### Evaluation & release gates
+- [Evaluation strategy](docs/evaluation-strategy.md)
+- [AI release gates](docs/release-gates.md)
+- [Phase 6 completion gates](docs/phase-6-completion.md)
+
 ### ADRs
 - [ADR-001: API vs reviewer UI](docs/adr/001-separate-api-from-reviewer-ui.md)
 - [ADR-002: Phase 1 idempotency](docs/adr/002-idempotency-phase-1.md)
@@ -204,6 +258,7 @@ Use `--execute` only where supported and only with dedicated sandbox/test creden
 - [ADR-007: Workflow state outside agents](docs/adr/007-orchestration-state-outside-agents.md)
 - [ADR-008: SQLite restart-safe workflow store](docs/adr/008-sqlite-durable-workflow-store.md)
 - [ADR-009: Authenticate webhooks before parsing](docs/adr/009-authenticate-webhooks-before-parsing.md)
+- [ADR-010: Separate deterministic and live-model evidence](docs/adr/010-separate-deterministic-and-live-model-evidence.md)
 
 ## Hugging Face publication
 
@@ -216,7 +271,7 @@ GitHub is the source of truth. The publication workflow uses the repository `HF_
 
 ## Current maturity boundary
 
-After Phase 5, the repository is a **runnable, contract-tested, restart-safe single-host multi-model workflow architecture proof**. It is not yet production validated. SQLite demonstrates transactional persistence and restart recovery on one host, not distributed HA. Remaining proof work includes deeper dataset-driven model/agent evaluation, operational telemetry and business-impact analytics, deployable infrastructure/SLO evidence, shared production persistence for any multi-replica topology, and live external-provider capability validation.
+After Phase 6, the repository is a **runnable, contract-tested, restart-safe single-host multi-model workflow architecture with enforceable deterministic agent release gates**. It is not yet production validated. SQLite demonstrates transactional persistence and restart recovery on one host, not distributed HA. Phase 6 demonstrates software/governance invariants under deterministic fixtures, not live-provider model accuracy. Remaining proof work includes operational telemetry and measured business-impact evidence, deployable infrastructure/SLO evidence, shared production persistence for any multi-replica topology, and retained live SaaS/model capability validation.
 
 Synthetic demonstration values are never presented as customer ROI.
 
