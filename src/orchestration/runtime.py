@@ -18,12 +18,20 @@ def _build_store() -> WorkflowRunStore:
     return SQLiteWorkflowRunStore(settings.workflow_db_path)
 
 
+def get_workflow_store() -> WorkflowRunStore:
+    """Return the durable workflow source of truth without requiring AI credentials."""
+    global _store
+    with _lock:
+        if _store is None:
+            _store = _build_store()
+        return _store
+
+
 def get_workflow_orchestrator() -> WorkflowOrchestrator:
-    """Build Phase 5 runtime lazily so importing the API never requires model keys."""
-    global _orchestrator, _store
+    """Build the governed AI runtime lazily so importing the API never requires model keys."""
+    global _orchestrator
     with _lock:
         if _orchestrator is None:
-            _store = _store or _build_store()
             router = build_ai_router(get_settings())
-            _orchestrator = WorkflowOrchestrator(RevenueOpsSupervisor(router), _store)
+            _orchestrator = WorkflowOrchestrator(RevenueOpsSupervisor(router), get_workflow_store())
         return _orchestrator
