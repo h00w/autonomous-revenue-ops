@@ -1,11 +1,22 @@
 """Local Phase 5 smoke test. It performs no network or SaaS calls."""
 
 import json
+import sys
 import tempfile
+from pathlib import Path
 
-from src.integrations.errors import IntegrationError, IntegrationErrorKind
-from src.reliability import CircuitBreaker, RetryPolicy, SQLiteDeadLetterQueue, execute_with_recovery
-from src.security.webhooks import SQLiteReplayProtector, WebhookVerifier
+ROOT = Path(__file__).resolve().parents[1]
+if str(ROOT) not in sys.path:
+    sys.path.insert(0, str(ROOT))
+
+from src.integrations.errors import IntegrationError, IntegrationErrorKind  # noqa: E402
+from src.reliability import (  # noqa: E402
+    CircuitBreaker,
+    RetryPolicy,
+    SQLiteDeadLetterQueue,
+    execute_with_recovery,
+)
+from src.security.webhooks import SQLiteReplayProtector, WebhookVerifier  # noqa: E402
 
 
 def main() -> None:
@@ -41,7 +52,16 @@ def main() -> None:
         )
         body = b"{}"
         verifier.verify(body, "1000", verifier.sign(body, "1000"))
-        print(json.dumps({"status": "ok", "network_calls": 0, "attempts": attempts["count"], "result": result}))
+        print(
+            json.dumps(
+                {
+                    "status": "ok",
+                    "network_calls": 0,
+                    "attempts": attempts["count"],
+                    "result": result,
+                }
+            )
+        )
 
 
 if __name__ == "__main__":
