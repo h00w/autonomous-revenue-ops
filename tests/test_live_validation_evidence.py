@@ -8,6 +8,7 @@ from src.evidence.live_validation import (
     fingerprint_identifier,
     runtime_fingerprint,
     sanitize_url,
+    validate_release_binding,
     verify_live_validation_bundle,
     write_live_validation_bundle,
 )
@@ -48,11 +49,40 @@ def test_sanitize_url_removes_credentials_query_and_fragment():
     assert sanitize_url("https://user:pass@example.com:8443/path?q=1#x") == "https://example.com:8443/path"
 
 
+def test_sanitize_url_does_not_raise_on_invalid_port_text():
+    assert sanitize_url("https://user:pass@example.com:not-a-port/path?token=x") == "https://example.com/path"
+
+
 def test_identifier_fingerprint_is_stable_and_non_reversible_shape():
     value = fingerprint_identifier("crm-record-123")
     assert value == fingerprint_identifier("crm-record-123")
     assert value != "crm-record-123"
     assert len(value or "") == 64
+
+
+def test_release_preflight_succeeds_only_for_exact_commit_and_version(tmp_path: Path):
+    manifest = _release_manifest(tmp_path)
+    binding = validate_release_binding(
+        service_version=VERSION,
+        root=tmp_path,
+        release_manifest=manifest,
+        source_commit=SOURCE_SHA,
+    )
+    assert binding["present"] is True
+    assert binding["source_commit"] == SOURCE_SHA
+    assert binding["service_version"] == VERSION
+    assert len(binding["sha256"]) == 64
+
+
+def test_release_preflight_blocks_mismatch_before_live_execution(tmp_path: Path):
+    manifest = _release_manifest(tmp_path)
+    with pytest.raises(ValueError, match="source_commit mismatch"):
+        validate_release_binding(
+            service_version=VERSION,
+            root=tmp_path,
+            release_manifest=manifest,
+            source_commit="b" * 40,
+        )
 
 
 def test_executed_live_evidence_requires_release_manifest(tmp_path: Path):
