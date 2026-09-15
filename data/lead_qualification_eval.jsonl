@@ -1,0 +1,6 @@
+{"case_id":"hot_001","lead":{"consent_to_contact":true},"qualification":{"score":92,"confidence":0.94,"risk_flags":[]},"expected_decision":"AUTO_ROUTE"}
+{"case_id":"review_001","lead":{"consent_to_contact":true},"qualification":{"score":72,"confidence":0.89,"risk_flags":[]},"expected_decision":"HUMAN_REVIEW"}
+{"case_id":"research_001","lead":{"consent_to_contact":true},"qualification":{"score":90,"confidence":0.62,"risk_flags":[]},"expected_decision":"RESEARCH_MORE"}
+{"case_id":"risk_001","lead":{"consent_to_contact":true},"qualification":{"score":95,"confidence":0.98,"risk_flags":["regulated_data"]},"expected_decision":"HUMAN_REVIEW"}
+{"case_id":"consent_001","lead":{"consent_to_contact":false},"qualification":{"score":96,"confidence":0.99,"risk_flags":[]},"expected_decision":"BLOCK"}
+{"case_id":"nurture_001","lead":{"consent_to_contact":true},"qualification":{"score":48,"confidence":0.91,"risk_flags":[]},"expected_decision":"NURTURE"}
