@@ -2,9 +2,14 @@ from __future__ import annotations
 
 import argparse
 import json
+import sys
 from pathlib import Path
 
-from release_evidence import ROOT, service_version
+ROOT = Path(__file__).resolve().parents[1]
+if str(ROOT) not in sys.path:
+    sys.path.insert(0, str(ROOT))
+
+from scripts.release_evidence import service_version  # noqa: E402
 
 
 def release_version_errors(root: Path = ROOT, tag: str | None = None) -> list[str]:
