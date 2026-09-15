@@ -1,0 +1,98 @@
+{
+  "info": {
+    "_postman_id": "71d79332-2c23-4dc8-a3a6-6eedf981e3c9",
+    "name": "Autonomous Revenue Ops",
+    "description": "Public, secret-free API collection for the Autonomous Revenue Ops staging/reviewer surface. Set base_url and aro_api_key in your own environment. Never publish real credentials.",
+    "schema": "https://schema.getpostman.com/json/collection/v2.1.0/collection.json"
+  },
+  "variable": [
+    {"key": "base_url", "value": "https://staging.example.com"},
+    {"key": "aro_api_key", "value": ""},
+    {"key": "run_id", "value": "replace-after-creating-a-workflow"}
+  ],
+  "auth": {
+    "type": "apikey",
+    "apikey": [
+      {"key": "key", "value": "X-ARO-API-Key", "type": "string"},
+      {"key": "value", "value": "{{aro_api_key}}", "type": "string"},
+      {"key": "in", "value": "header", "type": "string"}
+    ]
+  },
+  "item": [
+    {
+      "name": "Health",
+      "item": [
+        {
+          "name": "Liveness",
+          "request": {
+            "auth": {"type": "noauth"},
+            "method": "GET",
+            "header": [],
+            "url": {"raw": "{{base_url}}/health/live", "host": ["{{base_url}}"], "path": ["health", "live"]}
+          }
+        },
+        {
+          "name": "Readiness",
+          "request": {
+            "auth": {"type": "noauth"},
+            "method": "GET",
+            "header": [],
+            "url": {"raw": "{{base_url}}/health/ready", "host": ["{{base_url}}"], "path": ["health", "ready"]}
+          }
+        }
+      ]
+    },
+    {
+      "name": "Governed Workflow",
+      "item": [
+        {
+          "name": "Create Lead Workflow",
+          "request": {
+            "method": "POST",
+            "header": [
+              {"key": "Content-Type", "value": "application/json"},
+              {"key": "Idempotency-Key", "value": "postman-demo-{{$guid}}"},
+              {"key": "X-Correlation-ID", "value": "postman-{{$guid}}"}
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"lead\": {\n    \"lead_id\": \"postman-demo-001\",\n    \"name\": \"Avery Demo\",\n    \"email\": \"avery@example.com\",\n    \"company\": \"Example Manufacturing\",\n    \"role\": \"Operations Director\",\n    \"source\": \"website\",\n    \"message\": \"We need governed automation for inbound enterprise leads.\",\n    \"consent_to_contact\": true\n  },\n  \"enrichment_context\": {\n    \"industry\": \"industrial technology\",\n    \"employee_range\": \"200-500\"\n  }\n}"
+            },
+            "url": {"raw": "{{base_url}}/v1/workflows/leads", "host": ["{{base_url}}"], "path": ["v1", "workflows", "leads"]},
+            "description": "Creates or replays a durable lead workflow. Use only against a sandbox/staging deployment."
+          }
+        },
+        {
+          "name": "Inspect Workflow Run",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {"raw": "{{base_url}}/v1/workflows/runs/{{run_id}}", "host": ["{{base_url}}"], "path": ["v1", "workflows", "runs", "{{run_id}}"]}
+          }
+        }
+      ]
+    },
+    {
+      "name": "Operational Evidence",
+      "item": [
+        {
+          "name": "Measured Runtime Summary",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {"raw": "{{base_url}}/v1/analytics/summary", "host": ["{{base_url}}"], "path": ["v1", "analytics", "summary"]},
+            "description": "Aggregate persisted workflow evidence. Treat as operational telemetry only when evidence_class=measured_runtime."
+          }
+        },
+        {
+          "name": "Prometheus Metrics",
+          "request": {
+            "method": "GET",
+            "header": [{"key": "Accept", "value": "text/plain"}],
+            "url": {"raw": "{{base_url}}/v1/analytics/metrics", "host": ["{{base_url}}"], "path": ["v1", "analytics", "metrics"]}
+          }
+        }
+      ]
+    }
+  ]
+}
