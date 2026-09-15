@@ -11,6 +11,7 @@ services:
     runtime: image
     plan: free
     region: frankfurt
+    healthCheckPath: /healthz
     image:
       url: docker.io/n8nio/n8n:2.38.7
     envVars:
@@ -38,10 +39,37 @@ services:
         value: autonomous-revenue-ops-n8n.onrender.com
       - key: N8N_PROTOCOL
         value: https
-      - key: WEBHOOK_URL
+      - key: N8N_WEBHOOK_URL
         value: https://autonomous-revenue-ops-n8n.onrender.com/
       - key: N8N_EDITOR_BASE_URL
         value: https://autonomous-revenue-ops-n8n.onrender.com/
+      - key: N8N_PROXY_HOPS
+        value: "1"
+      # The public proof workflow uses Webhook -> HTTP Request -> Respond and
+      # has no Code/Python nodes. External runner mode prevents the constrained
+      # 512 MB demo instance from launching internal runners. A separate
+      # n8nio/runners sidecar is required before Code-node execution is enabled.
+      - key: N8N_RUNNERS_MODE
+        value: external
+      - key: N8N_RUNNERS_AUTH_TOKEN
+        generateValue: true
+      # Render Free has 512 MB RAM. n8n 2.38.x auto-selected a ~256 MB V8 old
+      # space and crashed during initial migrations. Raising old space to 384 MB
+      # gives startup more headroom. If this remains unstable under workflow
+      # load, move to 1c-2g instead of the 0.5c-512mb Starter plan, because
+      # Starter has the same RAM as Free.
+      - key: NODE_OPTIONS
+        value: --max-old-space-size=384
+      # Explicitly pin upcoming n8n defaults and keep the public demo surface
+      # conservative on community packages and decompression limits.
+      - key: N8N_UNVERIFIED_PACKAGES_ENABLED
+        value: "false"
+      - key: N8N_RUNNERS_TASK_TIMEOUT
+        value: "60"
+      - key: N8N_COMPRESSION_NODE_MAX_DECOMPRESSED_SIZE_BYTES
+        value: "268435456"
+      - key: N8N_COMPRESSION_NODE_MAX_ZIP_ENTRIES
+        value: "1000"
       - key: GENERIC_TIMEZONE
         value: Europe/Stockholm
       - key: TZ

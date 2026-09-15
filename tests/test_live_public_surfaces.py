@@ -15,11 +15,21 @@ def test_render_n8n_blueprint_is_pinned_and_postgres_backed():
     assert service["runtime"] == "image"
     assert service["region"] == "frankfurt"
     assert service["image"]["url"] == "docker.io/n8nio/n8n:2.38.7"
+    assert service["healthCheckPath"] == "/healthz"
 
     env = {item["key"]: item for item in service["envVars"]}
     assert env["DB_TYPE"]["value"] == "postgresdb"
     assert env["N8N_ENCRYPTION_KEY"]["generateValue"] is True
-    assert env["WEBHOOK_URL"]["value"].startswith("https://")
+    assert env["N8N_WEBHOOK_URL"]["value"].startswith("https://")
+    assert "WEBHOOK_URL" not in env
+    assert env["N8N_PROXY_HOPS"]["value"] == "1"
+    assert env["N8N_RUNNERS_MODE"]["value"] == "external"
+    assert env["N8N_RUNNERS_AUTH_TOKEN"]["generateValue"] is True
+    assert env["NODE_OPTIONS"]["value"] == "--max-old-space-size=384"
+    assert env["N8N_UNVERIFIED_PACKAGES_ENABLED"]["value"] == "false"
+    assert env["N8N_RUNNERS_TASK_TIMEOUT"]["value"] == "60"
+    assert env["N8N_COMPRESSION_NODE_MAX_DECOMPRESSED_SIZE_BYTES"]["value"] == "268435456"
+    assert env["N8N_COMPRESSION_NODE_MAX_ZIP_ENTRIES"]["value"] == "1000"
 
     database_refs = {
         env[key]["fromDatabase"]["name"]
@@ -41,6 +51,19 @@ def test_render_blueprint_contains_no_staging_credentials():
     assert "ARO_WORKFLOW_API_KEY" not in text
     assert "ARO_WEBHOOK_SIGNING_SECRET" not in text
     assert "password:" not in text.lower()
+
+
+def test_public_n8n_workflow_does_not_require_task_runners():
+    workflow = json.loads((ROOT / "n8n" / "lead-intake.workflow.json").read_text(encoding="utf-8"))
+    node_types = {node["type"] for node in workflow["nodes"]}
+
+    assert "n8n-nodes-base.code" not in node_types
+    assert "n8n-nodes-base.executeCommand" not in node_types
+    assert node_types == {
+        "n8n-nodes-base.webhook",
+        "n8n-nodes-base.httpRequest",
+        "n8n-nodes-base.respondToWebhook",
+    }
 
 
 def test_public_demo_doc_records_live_staging_surfaces():
