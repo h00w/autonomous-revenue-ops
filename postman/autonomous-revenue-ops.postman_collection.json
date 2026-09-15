@@ -2,11 +2,11 @@
   "info": {
     "_postman_id": "71d79332-2c23-4dc8-a3a6-6eedf981e3c9",
     "name": "Autonomous Revenue Ops",
-    "description": "Public, secret-free API collection for the Autonomous Revenue Ops staging/reviewer surface. Set base_url and aro_api_key in your own environment. Never publish real credentials.",
+    "description": "Public, secret-free API collection for the Autonomous Revenue Ops staging/reviewer surface. The default base_url points at the live Render staging API. Set aro_api_key only in a private Postman environment; never publish real credentials.",
     "schema": "https://schema.getpostman.com/json/collection/v2.1.0/collection.json"
   },
   "variable": [
-    {"key": "base_url", "value": "https://staging.example.com"},
+    {"key": "base_url", "value": "https://autonomous-revenue-ops-staging.onrender.com"},
     {"key": "aro_api_key", "value": ""},
     {"key": "run_id", "value": "replace-after-creating-a-workflow"}
   ],
@@ -59,7 +59,7 @@
               "raw": "{\n  \"lead\": {\n    \"lead_id\": \"postman-demo-001\",\n    \"name\": \"Avery Demo\",\n    \"email\": \"avery@example.com\",\n    \"company\": \"Example Manufacturing\",\n    \"role\": \"Operations Director\",\n    \"source\": \"website\",\n    \"message\": \"We need governed automation for inbound enterprise leads.\",\n    \"consent_to_contact\": true\n  },\n  \"enrichment_context\": {\n    \"industry\": \"industrial technology\",\n    \"employee_range\": \"200-500\"\n  }\n}"
             },
             "url": {"raw": "{{base_url}}/v1/workflows/leads", "host": ["{{base_url}}"], "path": ["v1", "workflows", "leads"]},
-            "description": "Creates or replays a durable lead workflow. Use only against a sandbox/staging deployment."
+            "description": "Creates or replays a durable lead workflow. Use only against a sandbox/staging deployment. A live AI provider key must also be configured on the staging API before this endpoint can execute the agent workflow."
           }
         },
         {
