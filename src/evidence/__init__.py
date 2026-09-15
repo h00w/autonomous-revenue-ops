@@ -5,6 +5,7 @@ from .live_validation import (
     fingerprint_identifier,
     runtime_fingerprint,
     sanitize_url,
+    validate_release_binding,
     verify_live_validation_bundle,
     write_live_validation_bundle,
 )
@@ -14,6 +15,7 @@ __all__ = [
     "fingerprint_identifier",
     "runtime_fingerprint",
     "sanitize_url",
+    "validate_release_binding",
     "verify_live_validation_bundle",
     "write_live_validation_bundle",
 ]
