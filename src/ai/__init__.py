@@ -1,12 +1,11 @@
-"""Multi-model structured AI and bounded agent layer."""
-
-from .base import StructuredLLMProvider
-from .models import StructuredGenerationRequest, StructuredGenerationResult
+from .agents import OutreachDraftingAgent, QualificationAgent, ResearchAgent
 from .router import ModelRouter
+from .supervisor import RevenueOpsSupervisor
 
 __all__ = [
     "ModelRouter",
-    "StructuredGenerationRequest",
-    "StructuredGenerationResult",
-    "StructuredLLMProvider",
+    "ResearchAgent",
+    "QualificationAgent",
+    "OutreachDraftingAgent",
+    "RevenueOpsSupervisor",
 ]

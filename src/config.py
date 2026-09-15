@@ -13,7 +13,7 @@ class Settings(BaseSettings):
     """
 
     app_name: str = "Autonomous Revenue Ops"
-    service_version: str = "0.2.0"
+    service_version: str = "0.3.0"
     environment: Literal["development", "test", "staging", "production"] = "development"
     api_prefix: str = "/v1"
     log_level: str = "INFO"
@@ -40,6 +40,19 @@ class Settings(BaseSettings):
     smtp_password: Optional[SecretStr] = None
     smtp_from_email: Optional[str] = None
     smtp_use_starttls: bool = True
+
+    # AI providers. Model IDs are configuration, not business logic.
+    ai_provider_order: str = "openai,anthropic,gemini"
+    ai_timeout_seconds: float = 30.0
+    openai_api_key: Optional[SecretStr] = None
+    openai_base_url: str = "https://api.openai.com"
+    openai_model: str = "gpt-5.6-terra"
+    anthropic_api_key: Optional[SecretStr] = None
+    anthropic_base_url: str = "https://api.anthropic.com"
+    anthropic_model: str = "claude-sonnet-5"
+    gemini_api_key: Optional[SecretStr] = None
+    gemini_base_url: str = "https://generativelanguage.googleapis.com"
+    gemini_model: str = "gemini-3.8-flash"
 
     model_config = SettingsConfigDict(
         env_file=".env",
