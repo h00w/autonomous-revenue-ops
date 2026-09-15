@@ -18,8 +18,10 @@ from src.ai.schema import strict_model_schema
 from src.config import Settings
 from src.evidence.live_validation import (
     build_live_validation_evidence,
+    fingerprint_identifier,
     runtime_fingerprint,
     utc_now,
+    validate_release_binding,
     write_live_validation_bundle,
 )
 
@@ -67,19 +69,58 @@ def main() -> None:
         raise SystemExit("--evidence-dir is required with --execute so live capability evidence is retained")
 
     settings = Settings(ai_provider_order=args.provider)
+    validate_release_binding(
+        service_version=settings.service_version,
+        root=ROOT,
+        release_manifest=args.release_manifest,
+    )
     router: ModelRouter = build_ai_router(settings)
     started_at = utc_now()
+    request = StructuredGenerationRequest(
+        system_prompt="Return a minimal structured health response. Do not perform any external action.",
+        user_prompt="Return status=ok and a short note.",
+        schema_name="SmokeOutput",
+        json_schema=strict_model_schema(SmokeOutput),
+        prompt_id="smoke.ai_provider",
+        prompt_version="1.0.0",
+        max_output_tokens=128,
+    )
+
     try:
-        request = StructuredGenerationRequest(
-            system_prompt="Return a minimal structured health response. Do not perform any external action.",
-            user_prompt="Return status=ok and a short note.",
-            schema_name="SmokeOutput",
-            json_schema=strict_model_schema(SmokeOutput),
-            prompt_id="smoke.ai_provider",
-            prompt_version="1.0.0",
-            max_output_tokens=128,
-        )
-        output, result = router.generate_typed(request, SmokeOutput)
+        try:
+            output, result = router.generate_typed(request, SmokeOutput)
+        except Exception as exc:
+            evidence = build_live_validation_evidence(
+                evidence_class="live_provider_smoke",
+                subject={
+                    "kind": "model",
+                    "name": args.provider,
+                    "configured_model": getattr(settings, f"{args.provider}_model"),
+                },
+                executed=True,
+                status="failed",
+                external_calls=1,
+                service_version=settings.service_version,
+                runtime=_runtime(settings, args.provider),
+                result={"error_class": exc.__class__.__name__},
+                root=ROOT,
+                release_manifest=args.release_manifest,
+                started_at=started_at,
+                finished_at=utc_now(),
+            )
+            bundle = write_live_validation_bundle(evidence, args.evidence_dir)
+            print(
+                json.dumps(
+                    {
+                        "status": "failed",
+                        "provider": args.provider,
+                        "error_class": exc.__class__.__name__,
+                        "bundle": bundle,
+                    },
+                    sort_keys=True,
+                )
+            )
+            raise SystemExit(1) from exc
     finally:
         router.close()
 
@@ -87,17 +128,12 @@ def main() -> None:
         "provider": result.provider,
         "model": result.model,
         "output": output.model_dump(),
-        "request_id_sha256": None,
+        "request_id_sha256": fingerprint_identifier(result.request_id),
         "input_tokens": result.input_tokens,
         "output_tokens": result.output_tokens,
         "latency_ms": result.latency_ms,
         "routing_attempts": [attempt.model_dump(mode="json") for attempt in result.routing_attempts],
     }
-    if result.request_id:
-        from src.evidence.live_validation import fingerprint_identifier
-
-        result_payload["request_id_sha256"] = fingerprint_identifier(result.request_id)
-
     evidence = build_live_validation_evidence(
         evidence_class="live_provider_smoke",
         subject={
