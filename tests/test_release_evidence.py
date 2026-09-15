@@ -34,6 +34,8 @@ def test_release_evidence_generates_spdx_manifest_and_honest_provenance(tmp_path
     assert manifest["source_commit"] == commit
     assert manifest["evidence_class"] == "release_integrity_manifest"
     assert ".env" not in manifest["files"]
+    assert ".github/workflows/live-validation.yml" in manifest["files"]
+    assert "scripts/verify_live_evidence.py" in manifest["files"]
     assert sbom["spdxVersion"] == "SPDX-2.3"
     assert len(sbom["packages"]) == len(parse_runtime_lock(ROOT))
     assert provenance["source_commit"] == commit

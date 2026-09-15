@@ -1,4 +1,4 @@
-.PHONY: install test benchmark agent-eval live-eval-dry analytics-report api demo verify deployment-check slo-dry release-version release-evidence release-verify smoke-hubspot smoke-salesforce smoke-slack smoke-smtp smoke-ai smoke-workflow smoke-reliability smoke-analytics
+.PHONY: install test benchmark agent-eval live-eval-dry analytics-report api demo verify deployment-check slo-dry release-version release-evidence release-verify live-evidence-contract live-evidence-verify smoke-hubspot smoke-salesforce smoke-slack smoke-smtp smoke-ai smoke-workflow smoke-reliability smoke-analytics
 
 install:
 	python -m pip install --upgrade pip
@@ -26,6 +26,12 @@ deployment-check:
 
 slo-dry:
 	python scripts/slo_probe.py
+
+live-evidence-contract:
+	python scripts/live_evidence_contract.py
+
+live-evidence-verify:
+	python scripts/verify_live_evidence.py live-validation-contract-evidence
 
 release-version:
 	python scripts/release_version_check.py
@@ -81,6 +87,8 @@ verify:
 	python scripts/analytics_smoke.py
 	python scripts/deployment_contract.py
 	python scripts/slo_probe.py
+	python scripts/live_evidence_contract.py
+	python scripts/verify_live_evidence.py live-validation-contract-evidence
 	python scripts/release_version_check.py
 	python scripts/release_evidence.py --output release-evidence
 	python scripts/verify_release_evidence.py release-evidence

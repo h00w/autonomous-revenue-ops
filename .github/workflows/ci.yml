@@ -62,6 +62,21 @@ jobs:
         run: python scripts/deployment_contract.py
       - name: Verify SLO probe is opt-in by default
         run: python scripts/slo_probe.py
+      - name: Validate retained live-evidence contract
+        env:
+          ARO_SOURCE_COMMIT: ${{ github.event.pull_request.head.sha || github.sha }}
+          ARO_ENVIRONMENT: test
+          ARO_SERVICE_VERSION: 0.10.0
+        run: |
+          python scripts/live_evidence_contract.py
+          python scripts/verify_live_evidence.py live-validation-contract-evidence
+      - name: Upload live-evidence contract artifact
+        if: ${{ always() && hashFiles('live-validation-contract-evidence/*') != '' }}
+        uses: actions/upload-artifact@v4
+        with:
+          name: live-validation-contract-evidence
+          path: live-validation-contract-evidence/
+          if-no-files-found: error
       - name: Validate release version contract
         run: python scripts/release_version_check.py
       - name: Generate and verify release integrity evidence
@@ -96,7 +111,7 @@ jobs:
             --mount source=aro-ci-data,target=/app/data \
             -p 18000:8000 \
             -e ARO_ENVIRONMENT=test \
-            -e ARO_SERVICE_VERSION=0.9.0 \
+            -e ARO_SERVICE_VERSION=0.10.0 \
             -e ARO_DEPLOYMENT_REPLICA_COUNT=1 \
             autonomous-revenue-ops:ci >/dev/null
           test "$(docker inspect --format '{{.Config.User}}' aro-ci)" = "10001:10001"

@@ -22,6 +22,9 @@ data/*.db-wal
 agent-eval-report.json
 release-evidence/
 autonomous-revenue-ops-*-evidence.tar.gz
+live-validation-contract-evidence/
+live-validation-evidence/
+*-live-eval.json
 
 # Local tooling / OS
 .DS_Store

@@ -19,14 +19,19 @@ TRACKED_INPUTS = (
     "src",
     "evals/prompt_manifest.json",
     "evals/release_thresholds.json",
+    "evals/live_agent_eval.py",
     "data/agent_eval_cases.jsonl",
     "deploy/k8s",
+    "scripts/ai_provider_smoke.py",
+    "scripts/integration_smoke.py",
+    "scripts/slo_probe.py",
+    "scripts/live_evidence_contract.py",
+    "scripts/verify_live_evidence.py",
     "scripts/release_evidence.py",
     "scripts/verify_release_evidence.py",
     "scripts/release_version_check.py",
     "Makefile",
-    ".github/workflows/ci.yml",
-    ".github/workflows/release.yml",
+    ".github/workflows",
 )
 
 
