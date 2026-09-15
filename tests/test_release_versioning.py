@@ -8,5 +8,6 @@ def test_release_version_is_aligned_across_runtime_manifests():
 
 
 def test_release_tag_must_exactly_match_service_version():
+    version = service_version(ROOT)
     errors = release_version_errors(ROOT, "v999.0.0")
-    assert errors == ["tag_version_mismatch:expected=v0.9.0:actual=v999.0.0"]
+    assert errors == [f"tag_version_mismatch:expected=v{version}:actual=v999.0.0"]
