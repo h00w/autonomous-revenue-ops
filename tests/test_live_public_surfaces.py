@@ -15,11 +15,19 @@ def test_render_n8n_blueprint_is_pinned_and_postgres_backed():
     assert service["runtime"] == "image"
     assert service["region"] == "frankfurt"
     assert service["image"]["url"] == "docker.io/n8nio/n8n:2.38.7"
+    assert service["healthCheckPath"] == "/healthz"
 
     env = {item["key"]: item for item in service["envVars"]}
     assert env["DB_TYPE"]["value"] == "postgresdb"
     assert env["N8N_ENCRYPTION_KEY"]["generateValue"] is True
-    assert env["WEBHOOK_URL"]["value"].startswith("https://")
+    assert env["N8N_WEBHOOK_URL"]["value"].startswith("https://")
+    assert "WEBHOOK_URL" not in env
+    assert env["N8N_PROXY_HOPS"]["value"] == "1"
+    assert env["NODE_OPTIONS"]["value"] == "--max-old-space-size=384"
+    assert env["N8N_UNVERIFIED_PACKAGES_ENABLED"]["value"] == "false"
+    assert env["N8N_RUNNERS_TASK_TIMEOUT"]["value"] == "60"
+    assert env["N8N_COMPRESSION_NODE_MAX_DECOMPRESSED_SIZE_BYTES"]["value"] == "268435456"
+    assert env["N8N_COMPRESSION_NODE_MAX_ZIP_ENTRIES"]["value"] == "1000"
 
     database_refs = {
         env[key]["fromDatabase"]["name"]
