@@ -18,8 +18,10 @@ data/*.db
 data/*.db-shm
 data/*.db-wal
 
-# Generated evaluation evidence
+# Generated evidence / release output
 agent-eval-report.json
+release-evidence/
+autonomous-revenue-ops-*-evidence.tar.gz
 
 # Local tooling / OS
 .DS_Store

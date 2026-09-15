@@ -9,7 +9,7 @@ class Settings(BaseSettings):
     """Runtime configuration loaded from ARO_-prefixed environment variables."""
 
     app_name: str = "Autonomous Revenue Ops"
-    service_version: str = "0.8.0"
+    service_version: str = "0.9.0"
     environment: Literal["development", "test", "staging", "production"] = "development"
     api_prefix: str = "/v1"
     log_level: str = "INFO"

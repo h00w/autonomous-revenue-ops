@@ -3,14 +3,14 @@ services:
     build:
       context: .
       target: runtime
-    image: autonomous-revenue-ops:0.8.0
+    image: autonomous-revenue-ops:0.9.0
     init: true
     restart: unless-stopped
     ports:
       - "8000:8000"
     environment:
       ARO_ENVIRONMENT: production
-      ARO_SERVICE_VERSION: 0.8.0
+      ARO_SERVICE_VERSION: 0.9.0
       ARO_DEPLOYMENT_REPLICA_COUNT: "1"
       ARO_WORKFLOW_STORE_BACKEND: sqlite
       ARO_WORKFLOW_DB_PATH: /app/data/workflows.sqlite3

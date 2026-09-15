@@ -26,7 +26,7 @@ spec:
           type: RuntimeDefault
       containers:
         - name: api
-          image: ghcr.io/h00w/autonomous-revenue-ops:0.8.0
+          image: ghcr.io/h00w/autonomous-revenue-ops:0.9.0
           imagePullPolicy: IfNotPresent
           ports:
             - name: http
