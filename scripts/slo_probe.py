@@ -2,11 +2,17 @@ from __future__ import annotations
 
 import argparse
 import json
+import sys
 import time
 import urllib.error
 import urllib.request
+from pathlib import Path
 
-from src.operations.slo import ProbeSample, SLOTargets, evaluate_slo
+ROOT = Path(__file__).resolve().parents[1]
+if str(ROOT) not in sys.path:
+    sys.path.insert(0, str(ROOT))
+
+from src.operations.slo import ProbeSample, SLOTargets, evaluate_slo  # noqa: E402
 
 
 def _probe(url: str, timeout: float) -> tuple[bool, float]:
@@ -45,6 +51,9 @@ def main() -> None:
             )
         )
         return
+
+    if args.requests < 1:
+        raise SystemExit("--requests must be at least 1")
 
     samples: list[ProbeSample] = []
     for index in range(args.requests):
