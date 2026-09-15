@@ -17,9 +17,13 @@ class RevenueOpsService:
         settings: Settings | None = None,
         idempotency_store: InMemoryIdempotencyStore | None = None,
     ) -> None:
-        self.settings = settings or get_settings()
-        self.idempotency_store = idempotency_store or InMemoryIdempotencyStore(
-            ttl_seconds=self.settings.idempotency_ttl_seconds
+        self.settings = settings if settings is not None else get_settings()
+        self.idempotency_store = (
+            idempotency_store
+            if idempotency_store is not None
+            else InMemoryIdempotencyStore(
+                ttl_seconds=self.settings.idempotency_ttl_seconds
+            )
         )
 
     def process(
