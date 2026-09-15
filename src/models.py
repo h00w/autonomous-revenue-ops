@@ -1,5 +1,7 @@
+from datetime import datetime, timezone
 from enum import Enum
-from typing import List, Optional
+from typing import Any, List, Optional
+
 from pydantic import BaseModel, EmailStr, Field
 
 
@@ -39,9 +41,39 @@ class PolicyResult(BaseModel):
     next_action: str
 
 
+class LeadEvaluationRequest(BaseModel):
+    lead: LeadInput
+    qualification: Qualification
+
+
+class EventEnvelope(BaseModel):
+    event_id: str
+    event_type: str
+    event_version: str = "1.0"
+    occurred_at: datetime = Field(default_factory=lambda: datetime.now(timezone.utc))
+    correlation_id: str
+    idempotency_key: str
+    source: str = "revenue-ops-api"
+    payload: dict[str, Any] = Field(default_factory=dict)
+
+
 class WorkflowTrace(BaseModel):
     event_id: str
     correlation_id: str
     lead: LeadInput
     qualification: Qualification
     policy: PolicyResult
+
+
+class WorkflowResponse(BaseModel):
+    event: EventEnvelope
+    policy: PolicyResult
+    replayed: bool = False
+
+
+class HealthResponse(BaseModel):
+    status: str
+    service: str
+    version: str
+    environment: str
+    checks: dict[str, str] = Field(default_factory=dict)

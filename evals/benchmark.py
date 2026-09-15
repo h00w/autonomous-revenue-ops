@@ -1,12 +1,22 @@
 import json
+import sys
 from pathlib import Path
 
-from src.models import LeadInput, Qualification
-from src.policy import evaluate_policy
+ROOT = Path(__file__).resolve().parents[1]
+if str(ROOT) not in sys.path:
+    sys.path.insert(0, str(ROOT))
+
+from src.models import LeadInput, Qualification  # noqa: E402
+from src.policy import evaluate_policy  # noqa: E402
 
 
-def run(path="data/lead_qualification_eval.jsonl"):
-    cases = [json.loads(line) for line in Path(path).read_text().splitlines() if line.strip()]
+def run(path: str | Path | None = None):
+    dataset_path = Path(path) if path is not None else ROOT / "data" / "lead_qualification_eval.jsonl"
+    cases = [
+        json.loads(line)
+        for line in dataset_path.read_text(encoding="utf-8").splitlines()
+        if line.strip()
+    ]
     passed = 0
     rows = []
     for case in cases:

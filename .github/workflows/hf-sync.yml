@@ -22,7 +22,7 @@ jobs:
         with:
           python-version: '3.12'
       - name: Install Hugging Face client
-        run: python -m pip install --upgrade huggingface_hub
+        run: python -m pip install --upgrade 'huggingface_hub>=1.31,<2'
       - name: Prepare publication folders
         run: |
           mkdir -p .publish/space .publish/model .publish/dataset
@@ -31,15 +31,21 @@ jobs:
           cp hf/model/README.md .publish/model/README.md
           cp hf/dataset/README.md .publish/dataset/README.md
           cp data/lead_qualification_eval.jsonl .publish/dataset/
+      - name: Validate Hugging Face token
+        env:
+          HF_TOKEN: ${{ secrets.HF_TOKEN }}
+        run: |
+          test -n "$HF_TOKEN"
+          hf auth whoami --token "$HF_TOKEN"
       - name: Publish Space
         env:
           HF_TOKEN: ${{ secrets.HF_TOKEN }}
-        run: huggingface-cli upload h0000w/autonomous-revenue-ops .publish/space . --repo-type space --token "$HF_TOKEN"
+        run: hf upload h0000w/autonomous-revenue-ops .publish/space . --repo-type space --token "$HF_TOKEN"
       - name: Publish dataset
         env:
           HF_TOKEN: ${{ secrets.HF_TOKEN }}
-        run: huggingface-cli upload h0000w/autonomous-revenue-ops .publish/dataset . --repo-type dataset --token "$HF_TOKEN"
+        run: hf upload h0000w/autonomous-revenue-ops .publish/dataset . --repo-type dataset --token "$HF_TOKEN"
       - name: Publish model/system card
         env:
           HF_TOKEN: ${{ secrets.HF_TOKEN }}
-        run: huggingface-cli upload h0000w/autonomous-revenue-ops .publish/model . --repo-type model --token "$HF_TOKEN"
+        run: hf upload h0000w/autonomous-revenue-ops .publish/model . --repo-type model --token "$HF_TOKEN"
