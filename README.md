@@ -1,37 +1,37 @@
 # Autonomous Revenue Ops
 
-> Production-grade AI agents, SaaS integrations, governed workflow automation, operational evidence, and hardened deployment controls for revenue operations.
+> Production-grade AI agents, SaaS integrations, governed workflow automation, release integrity, retained validation evidence, and hardened deployment controls for revenue operations.
 
 [![CI](https://github.com/h00w/autonomous-revenue-ops/actions/workflows/ci.yml/badge.svg)](https://github.com/h00w/autonomous-revenue-ops/actions/workflows/ci.yml)
 [![Hugging Face Space](https://img.shields.io/badge/Hugging%20Face-Space-FFD21E?logo=huggingface&logoColor=000)](https://huggingface.co/spaces/h0000w/autonomous-revenue-ops)
 [![Dataset](https://img.shields.io/badge/Hugging%20Face-Dataset-FFD21E?logo=huggingface&logoColor=000)](https://huggingface.co/datasets/h0000w/autonomous-revenue-ops)
 [![System Card](https://img.shields.io/badge/Hugging%20Face-System%20Card-FFD21E?logo=huggingface&logoColor=000)](https://huggingface.co/h0000w/autonomous-revenue-ops)
 
-**Proof chain:** source → typed API → structured multi-model reasoning → deterministic policy → durable workflow state → authenticated ingress → bounded/recoverable execution → deterministic release gates → measured-runtime analytics → hardened container/deployment contract → CI evidence → public reviewer surfaces.
+**Proof chain:** source → typed API → structured multi-model reasoning → deterministic policy → durable workflow state → authenticated ingress → bounded/recoverable SaaS execution → deterministic release gates → operational analytics → hardened deployment → pinned release inputs + SBOM → source-bound retained live-validation framework → CI/public proof.
 
 ## Why this repository exists
 
-Most AI-automation demos prove only that a happy-path workflow can run once. This repository is structured to prove the harder engineering properties: typed contracts, deterministic authorization, explicit workflow state, idempotency, restart recovery, human approval, bounded external actions, failure handling, prompt/evaluation change control, operational analytics, security boundaries, and deployable runtime behavior.
+Most AI automation demos prove that a happy path can run once. This repository is designed to prove harder engineering properties: typed contracts, deterministic authorization, explicit workflow state, restart recovery, idempotency, human checkpoints, bounded side effects, failure recovery, prompt/evaluation change control, operational evidence, deployment hardening, release integrity, and a disciplined separation between simulated/deterministic evidence and real external validation.
 
-**Core rule:** AI may propose. Software validates. Policy authorizes. Durable workflow state gates execution. Bounded adapters execute. Explicit evidence determines completion.
+**Core rule:** AI may propose. Software validates. Policy authorizes. Durable workflow state gates execution. Bounded adapters execute. Explicit evidence determines completion and maturity.
 
 ## Project status
 
 | Phase | Status | Verified evidence |
 | --- | --- | --- |
-| 0 — Foundation & publication | ✅ Complete | policy/eval skeleton, Gradio proof, HF sync |
+| 0 — Foundation & publication | ✅ Complete | policy/eval skeleton, Gradio proof, HF publication path |
 | 1 — Core production architecture | ✅ Complete | FastAPI, typed services/events, correlation, idempotency, health model |
 | 2 — SaaS & CRM integrations | ✅ Contract-complete · 🔬 live validation pending | HubSpot, Salesforce, Slack, SMTP, webhook adapters; 41 tests at merge |
 | 3 — Multi-model AI & agents | ✅ Contract-complete · 🔬 live validation pending | OpenAI/Anthropic/Gemini adapters; Research/Qualification/Outreach agents; 55 tests at merge |
 | 4 — Workflow orchestration | ✅ Complete | explicit state machine, approval/research checkpoints, n8n contract; 65 tests at merge |
-| 5 — Reliability, recovery & security | ✅ Complete | restart-safe SQLite, revisions, leases, recovery, retry/circuit/DLQ, API auth, signed replay-resistant webhooks; 78 tests at merge |
-| 6 — Agent evaluation & release gates | ✅ Deterministic gate complete · 🔬 live model eval pending | 7-case supervisor eval, all required rates 100%, 0 policy violations, prompt manifest, CI artifact; 82 tests at merge |
+| 5 — Reliability, recovery & security | ✅ Complete | restart-safe SQLite, revisions, leases, retry/circuit/DLQ, API auth, signed replay-resistant webhooks; 78 tests at merge |
+| 6 — Agent evaluation & release gates | ✅ Deterministic gate complete · 🔬 live model eval pending | 7-case supervisor eval, required rates 100%, 0 policy violations, prompt manifest; 82 tests at merge |
 | 7 — Operational analytics & business impact | ✅ Complete | persisted-run telemetry, Prometheus metrics, measured-runtime vs scenario-projection separation; 86 tests at merge |
-| 8 — Deployment hardening & SLO evidence | ✅ Complete | non-root/read-only container, K8s contract, fail-closed production readiness, SLO evidence classes; **94 tests**, hardened container boot verified |
-| 9 — Release & public proof | ⏭ Next | release manifest, SBOM/provenance, integrity bundle, security/release docs, recruiter-facing proof |
-| 10 — Live-provider production validation | Planned | retained live SaaS/model/deployment evidence tied to exact commit/config |
+| 8 — Deployment hardening & SLO evidence | ✅ Complete | non-root/read-only container, K8s contract, fail-closed readiness, explicit SQLite scaling boundary; 94 tests at merge |
+| 9 — Release integrity & public proof | ✅ Complete | digest-pinned base, exact runtime lock, SPDX SBOM, integrity manifest, provenance metadata, release authorization; 100 tests at merge |
+| 10 — Retained live validation evidence | ✅ Framework complete · 🔬 external execution pending | source/release-bound evidence schema, verifier, manual-only live workflow, secret-safe retention; **116 tests on implementation-complete head** |
 
-The maturity boundary is intentional: the repository is currently a **deployment-candidate, contract-tested, hardened single-replica architecture proof**. It is **not yet Production Validated**. Live SaaS/model capability evidence, long-window deployment SLO evidence, and a shared transactional persistence layer for horizontal replicas remain separate requirements.
+The repository is currently a **release-integrity-controlled, deployment-candidate, contract-tested, security-hardened single-replica architecture proof with a retained live-validation framework**. It is **not yet Production Validated** because the real provider/SaaS/staging executions have not been performed and retained as Phase 10 live evidence.
 
 ## End-to-end system flow
 
@@ -63,29 +63,37 @@ Inbound lead / signed SaaS webhook / n8n
   → persisted operational analytics
 ```
 
-Release path:
+Release and validation path:
 
 ```text
-code / prompt / schema / policy change
-  → 94-test regression suite
+code / prompt / schema / policy / workflow change
+  → 116-test regression suite
   → 6/6 policy benchmark
   → 7-case deterministic supervisor gate
-  → prompt manifest/version/hash validation
-  → side-effect-free provider/SaaS smoke gates
-  → analytics evidence-separation gate
-  → deployment contract gate
+  → zero-call live/SaaS/deployment harness checks
+  → deployment hardening contract
+  → v0.10.0 release-version contract
+  → release manifest + SPDX SBOM + provenance + SHA-256 verification
+  → retained-live-evidence contract + verifier
   → hardened container build + boot
-  → CI evidence artifact
-  → merge only when green
+  → merge only when exact head is green
+
+explicit manual validation only
+  → main branch + sandbox/test/staging acknowledgement
+  → exact release manifest verified before external call
+  → selected model / SaaS / deployment check
+  → secret-safe evidence bundle
+  → checksum verification
+  → retained GitHub Actions artifact
 ```
 
-## Current verified evidence
+## Current verified deterministic evidence
 
-The Phase 8 exact-head CI gate verifies:
+The Phase 10 implementation-complete CI gate verifies:
 
 | Evidence | Result |
 | --- | ---: |
-| Python regression suite | **94/94 passed** |
+| Python regression suite | **116/116 passed** |
 | Policy benchmark | **6/6 (100%)** |
 | Structured-output success | **100%** |
 | Deterministic decision accuracy | **100%** |
@@ -94,13 +102,17 @@ The Phase 8 exact-head CI gate verifies:
 | Prompt boundary integrity | **100%** |
 | Policy violations | **0** |
 | Agent evaluation cases | **7** |
-| Static deployment contract | **PASS / 0 errors** |
+| OpenAI/Anthropic/Gemini default external calls | **0** |
+| HubSpot/Salesforce/Slack/SMTP default external calls | **0** |
 | SLO dry-run external calls | **0** |
+| Retained-evidence contract | **PASS / 0 network calls** |
+| Release version contract | **PASS / v0.10.0** |
+| Release-integrity verification | **PASS / 0 errors** |
 | Hardened container liveness | **HTTP 200 / ok** |
 | Hardened container readiness | **HTTP 200 / ok** |
 | Container runtime identity | **UID/GID 10001:10001** |
 
-The 100% agent metrics above are **deterministic contract/governance evidence** using controlled fixtures. They are not presented as OpenAI, Anthropic, or Gemini model accuracy.
+The 100% agent metrics are **deterministic contract/governance evidence using controlled fixtures**. They are not presented as OpenAI, Anthropic, or Gemini accuracy. Normal PR CI reads no live-provider/SaaS secrets and performs no live external validation.
 
 ## Production controls
 
@@ -109,52 +121,130 @@ The 100% agent metrics above are **deterministic contract/governance evidence** 
 | Domain/API contracts | `src/models.py`, FastAPI/Pydantic |
 | Deterministic authorization | `src/policy.py` |
 | Multi-model structured generation | `src/ai/` |
-| Prompt version/change control | `src/ai/prompts.py`, `evals/prompt_manifest.json` |
+| Prompt change control | `src/ai/prompts.py`, `evals/prompt_manifest.json` |
 | Agent supervision | `src/ai/supervisor.py` |
 | Durable workflow state | `src/orchestration/` |
-| Idempotency + stale-writer protection | `src/orchestration/store.py` |
+| Idempotency / stale-writer protection | `src/orchestration/store.py` |
 | Human/research checkpoints | `src/orchestration/engine.py` |
-| Executor leases / claims | `src/orchestration/store.py`, `src/orchestration/engine.py` |
 | Retry / circuit breaker / DLQ | `src/reliability.py` |
 | API authentication | `src/security/auth.py` |
-| HMAC webhook + replay protection | `src/security/webhooks.py` |
+| Signed/replay-protected webhooks | `src/security/webhooks.py` |
 | HubSpot / Salesforce / Slack / SMTP | `src/integrations/` |
 | Operational analytics | `src/analytics/` |
-| Measured-vs-scenario evidence boundary | `src/analytics/impact.py` |
-| Prometheus-compatible aggregate metrics | `GET /v1/analytics/metrics` |
+| Measured-vs-scenario boundary | `src/analytics/impact.py` |
 | Deployment readiness | `src/operations/readiness.py` |
-| Candidate/live SLO evidence model | `src/operations/slo.py`, `scripts/slo_probe.py` |
-| Deployment hardening validator | `scripts/deployment_contract.py` |
+| Candidate/live SLO model | `src/operations/slo.py`, `scripts/slo_probe.py` |
 | Hardened API image | `Dockerfile`, `docker-compose.yml` |
 | Kubernetes reference | `deploy/k8s/` |
+| Release integrity / SBOM | `scripts/release_evidence.py`, `scripts/verify_release_evidence.py` |
+| Release authorization | `scripts/release_version_check.py`, `.github/workflows/release.yml` |
+| Retained live evidence | `src/evidence/`, `scripts/verify_live_evidence.py` |
+| Manual external validation | `.github/workflows/live-validation.yml` |
 | Regression/eval evidence | `tests/`, `evals/`, `.github/workflows/ci.yml` |
 
 ## Deployment boundary
 
-The current durable store is SQLite. Phase 8 therefore deliberately validates a **single application replica**:
+The durable workflow/security stores are still SQLite. The reference production topology therefore deliberately remains **single replica**:
 
 - Kubernetes `replicas: 1`;
 - `Recreate` deployment strategy;
 - `ReadWriteOnce` persistent volume;
 - runtime `ARO_DEPLOYMENT_REPLICA_COUNT=1`;
-- production readiness fails if SQLite is configured with more than one application replica.
+- production readiness fails if SQLite is paired with more than one application replica.
 
-This is a safety constraint, not a scalability claim. Horizontal application replicas require migration of workflow/idempotency/replay state to a shared transactional backend followed by concurrency/failover validation.
+This is a safety constraint, not a scalability claim. Horizontal application replicas require a shared transactional persistence layer plus concurrency/failover validation.
 
-The reference container/Kubernetes runtime also enforces non-root execution, a read-only root filesystem, dropped Linux capabilities, no privilege escalation, RuntimeDefault seccomp, bounded resources, liveness/readiness probes, and external secret references.
+The reference runtime also enforces non-root execution, read-only root filesystem, dropped Linux capabilities, no privilege escalation, RuntimeDefault seccomp, bounded resources, liveness/readiness probes, and external secret references.
 
 ## Evidence classes
 
-The project keeps evidence types explicit so demos are not mislabeled as production results:
+Evidence labels are explicit so demos cannot silently become production claims:
 
 - `deterministic_contract_eval` — CI agent/policy/software invariants;
 - `measured_runtime` — aggregates calculated from persisted workflow records;
-- `scenario_projection` — hypothetical time/cost/business impact from explicit assumptions, **not measured customer ROI**;
-- `static_deployment_contract` — manifest/container-policy validation without a deployment call;
-- `container_runtime_smoke` — locally built hardened container boot/health proof;
-- `candidate_slo_target` — configured SLO engineering target only;
-- `live_deployment_probe` — emitted only by an explicitly executed probe against a selected deployment;
-- `live_provider_eval` — retained live model evaluation, separate from deterministic CI evidence.
+- `scenario_projection` — hypothetical time/cost/business impact, **not measured customer ROI**;
+- `static_deployment_contract` — manifest/container policy validation without a deployment call;
+- `container_runtime_smoke` — hardened local container boot/health proof;
+- `candidate_slo_target` — configured engineering target only;
+- `validation_harness_contract` — zero-network proof that retained-evidence machinery works;
+- `live_provider_smoke` — one explicitly executed provider capability check;
+- `live_provider_eval` — explicitly executed controlled model evaluation with prompt/dataset fingerprints;
+- `live_integration_smoke` — explicitly executed sandbox/test SaaS operation;
+- `live_deployment_probe` — explicitly executed liveness/readiness observation window.
+
+Every retained live class remains bounded by `production_validated=false`. A single successful smoke/eval/probe upgrades only that exact capability claim, not the whole system.
+
+## Release integrity
+
+Phase 9/10 release evidence contains:
+
+- digest-pinned Python base image;
+- exact direct and transitive runtime dependencies;
+- SPDX 2.3 runtime SBOM;
+- source/evaluation/deployment/workflow SHA-256 manifest;
+- project-generated provenance metadata;
+- `SHA256SUMS` verification;
+- release tag/version alignment.
+
+The provenance remains intentionally honest:
+
+```text
+signed = false
+slsa_statement = false
+```
+
+No Sigstore/Cosign or SLSA claim is made.
+
+## Retained live validation
+
+A real execution must first generate and verify release evidence from the exact commit:
+
+```bash
+export ARO_SOURCE_COMMIT="$(git rev-parse HEAD)"
+python scripts/release_evidence.py --output release-evidence
+python scripts/verify_release_evidence.py release-evidence
+```
+
+Then execute a selected sandbox/test check with an evidence directory:
+
+```bash
+python scripts/ai_provider_smoke.py openai \
+  --execute \
+  --evidence-dir live-validation-evidence/openai-smoke
+
+python scripts/verify_live_evidence.py live-validation-evidence/openai-smoke
+```
+
+Full controlled model evaluation:
+
+```bash
+python evals/live_agent_eval.py openai \
+  --execute \
+  --enforce \
+  --evidence-dir live-validation-evidence/openai-eval
+```
+
+SaaS example:
+
+```bash
+python scripts/integration_smoke.py hubspot \
+  --execute \
+  --evidence-dir live-validation-evidence/hubspot-smoke
+```
+
+Deployment example:
+
+```bash
+python scripts/slo_probe.py \
+  --base-url https://staging.example.com \
+  --target-label staging \
+  --requests 100 \
+  --execute \
+  --enforce \
+  --evidence-dir live-validation-evidence/staging-probe
+```
+
+For repository-managed execution, use **Actions → Retained Live Validation → Run workflow** on `main`. The workflow is manual-only, requires an explicit sandbox/test/staging acknowledgement, verifies release provenance before the external call, performs operation-specific credential preflight, verifies the resulting evidence, and uploads it as a retained artifact.
 
 ## Run locally
 
@@ -167,18 +257,22 @@ cp .env.example .env
 uvicorn src.api:app --reload --host 0.0.0.0 --port 8000
 ```
 
-Or build the API image:
+Build the hardened API image:
 
 ```bash
-docker build -t autonomous-revenue-ops:0.8.0 .
+docker build -t autonomous-revenue-ops:0.10.0 .
 ```
 
-`make verify` runs the local non-network verification chain, including regression tests, policy/agent gates, smoke harnesses, analytics evidence checks, deployment-contract validation and SLO dry-run validation.
+Run the entire non-network verification chain:
+
+```bash
+make verify
+```
 
 ## Key endpoints
 
 - `GET /health/live` — shallow process liveness
-- `GET /health/ready` — deployment readiness; returns 503 when production requirements are missing
+- `GET /health/ready` — deployment readiness; 503 when production requirements are missing
 - `POST /v1/leads/evaluate` — governed direct evaluation
 - `POST /v1/workflows/leads` — create/replay a workflow
 - `GET /v1/workflows/runs/{run_id}` — inspect durable state
@@ -188,61 +282,25 @@ docker build -t autonomous-revenue-ops:0.8.0 .
 - `POST /v1/workflows/runs/{run_id}/complete` — record execution receipt
 - `POST /v1/workflows/recover` — recover persisted stalled runs
 - `POST /v1/webhooks/lead` — signed/replay-protected lead ingress
-- `GET /v1/analytics/summary` — aggregate persisted-run analytics
+- `GET /v1/analytics/summary` — persisted-run analytics
 - `GET /v1/analytics/metrics` — Prometheus-compatible aggregate metrics
 - `POST /v1/analytics/impact` — explicitly labeled scenario projection
 
-## Verification and opt-in live evidence
-
-Required deterministic gate:
-
-```bash
-make verify
-```
-
-Opt-in live model evaluation:
-
-```bash
-python evals/live_agent_eval.py openai
-python evals/live_agent_eval.py openai --execute --report openai-live-eval.json
-```
-
-Opt-in deployment SLO probe:
-
-```bash
-python scripts/slo_probe.py
-python scripts/slo_probe.py --base-url https://staging.example.com --requests 100 --execute --enforce
-```
-
-Without the explicit execution flags, these harnesses make no external model/deployment calls.
-
 ## Documentation
 
-### Architecture and integrations
+### Architecture, integrations, agents and operations
 - [System design](docs/system-design.md)
-- [Event / correlation / idempotency](docs/event-model.md)
-- [Runtime configuration](docs/configuration.md)
 - [Integration architecture](docs/integrations.md)
-- [Integration contracts](docs/integration-contracts.md)
-- [CRM field mapping](docs/crm-field-mapping.md)
-
-### Agents, orchestration, reliability and security
 - [Agent architecture](docs/agent-architecture.md)
-- [Prompt strategy](docs/prompt-strategy.md)
-- [Model routing](docs/model-routing.md)
 - [Workflow orchestration](docs/workflow-orchestration.md)
-- [n8n orchestration](docs/n8n-orchestration.md)
 - [Reliability architecture](docs/reliability-architecture.md)
 - [Security controls](docs/security.md)
 - [Recovery runbook](docs/recovery-runbook.md)
-
-### Evaluation, analytics and deployment
-- [Evaluation strategy](docs/evaluation-strategy.md)
-- [AI release gates](docs/release-gates.md)
 - [Operational analytics](docs/operational-analytics.md)
-- [Business impact evidence](docs/business-impact.md)
 - [Deployment architecture](docs/deployment-architecture.md)
 - [SLO evidence model](docs/slo-evidence.md)
+- [Retained live validation evidence](docs/live-validation-evidence.md)
+- [90-second public proof](docs/public-proof.md)
 
 ### Phase completion records
 - [Phase 1](docs/phase-1-completion.md)
@@ -253,6 +311,8 @@ Without the explicit execution flags, these harnesses make no external model/dep
 - [Phase 6](docs/phase-6-completion.md)
 - [Phase 7](docs/phase-7-completion.md)
 - [Phase 8](docs/phase-8-completion.md)
+- [Phase 9](docs/phase-9-completion.md)
+- [Phase 10](docs/phase-10-completion.md)
 
 ### Key ADRs
 - [ADR-005: AI recommends; deterministic policy authorizes](docs/adr/005-ai-recommends-policy-authorizes.md)
@@ -261,7 +321,8 @@ Without the explicit execution flags, these harnesses make no external model/dep
 - [ADR-009: Authenticate webhooks before parsing](docs/adr/009-authenticate-webhooks-before-parsing.md)
 - [ADR-010: Separate deterministic and live-model evidence](docs/adr/010-separate-deterministic-and-live-model-evidence.md)
 - [ADR-011: Separate measured runtime from business-impact scenarios](docs/adr/011-separate-measured-and-scenario-evidence.md)
-- [ADR-012: Keep the SQLite deployment single-replica](docs/adr/012-single-replica-sqlite-deployment-boundary.md)
+- [ADR-012: Keep SQLite deployment single-replica](docs/adr/012-single-replica-sqlite-deployment-boundary.md)
+- [ADR-014: Bind live validation to exact release manifest](docs/adr/014-retain-live-evidence-against-release-manifest.md)
 
 ## Hugging Face publication
 
@@ -270,13 +331,13 @@ Without the explicit execution flags, these harnesses make no external model/dep
 - System/model card: https://huggingface.co/h0000w/autonomous-revenue-ops
 - Bucket: https://huggingface.co/buckets/h0000w/autonomous-revenue-ops
 
-GitHub remains the source of truth. The Hugging Face publication workflow uses the repository `HF_TOKEN` secret.
+GitHub remains the source of truth. Hugging Face publication is a public review surface, not a substitute for repository release/evidence gates.
 
 ## Current maturity boundary
 
-After Phase 8, this is a **deployment-candidate, contract-tested, restart-safe, security-hardened single-replica AI automation architecture with enforceable deterministic release gates and measured-runtime analytics**.
+This repository has deterministic software/agent evidence, durable orchestration, reliability/security controls, measured-runtime analytics, hardened single-replica deployment proof, pinned release inputs, SBOM/integrity metadata, and a retained external-validation framework.
 
-It is not yet **Production Validated**. Remaining evidence includes reproducible release/supply-chain proof, retained live SaaS/model validation tied to exact commits/configuration, meaningful live deployment observation windows, and shared transactional persistence before any horizontal-replica claim.
+It is **not yet Production Validated**. Remaining evidence includes actual retained model/SaaS/staging executions, meaningful live deployment observation windows, and shared transactional persistence before any horizontal-replica claim.
 
 Synthetic demonstration values and scenario projections are never presented as customer ROI.
 
