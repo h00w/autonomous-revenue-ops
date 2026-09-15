@@ -1,4 +1,4 @@
-.PHONY: install test benchmark api demo verify
+.PHONY: install test benchmark api demo verify smoke-hubspot smoke-salesforce smoke-slack smoke-smtp
 
 install:
 	python -m pip install --upgrade pip
@@ -16,7 +16,23 @@ api:
 demo:
 	python app.py
 
+smoke-hubspot:
+	python scripts/integration_smoke.py hubspot
+
+smoke-salesforce:
+	python scripts/integration_smoke.py salesforce
+
+smoke-slack:
+	python scripts/integration_smoke.py slack
+
+smoke-smtp:
+	python scripts/integration_smoke.py smtp
+
 verify:
-	python -m compileall -q src
+	python -m compileall -q src scripts
 	python -m pytest -q
 	python evals/benchmark.py
+	python scripts/integration_smoke.py hubspot
+	python scripts/integration_smoke.py salesforce
+	python scripts/integration_smoke.py slack
+	python scripts/integration_smoke.py smtp
