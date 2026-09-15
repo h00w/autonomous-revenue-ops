@@ -18,6 +18,7 @@ from src.evidence.live_validation import (  # noqa: E402
     runtime_fingerprint,
     sanitize_url,
     utc_now,
+    validate_release_binding,
     write_live_validation_bundle,
 )
 from src.operations.slo import ProbeSample, SLOTargets, evaluate_slo  # noqa: E402
@@ -69,6 +70,12 @@ def main() -> None:
         raise SystemExit("--requests must be at least 1")
 
     settings = Settings()
+    validate_release_binding(
+        service_version=settings.service_version,
+        root=ROOT,
+        release_manifest=args.release_manifest,
+    )
+
     samples: list[ProbeSample] = []
     started_at = utc_now()
     for index in range(args.requests):
