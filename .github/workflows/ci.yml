@@ -30,7 +30,7 @@ jobs:
       - name: Run deterministic multi-agent release gate
         run: python evals/agent_release_gate.py --report agent-eval-report.json
       - name: Upload agent evaluation evidence
-        if: always()
+        if: ${{ always() && hashFiles('agent-eval-report.json') != '' }}
         uses: actions/upload-artifact@v4
         with:
           name: agent-eval-report
@@ -71,7 +71,7 @@ jobs:
           python scripts/release_evidence.py --output release-evidence
           python scripts/verify_release_evidence.py release-evidence
       - name: Upload release integrity evidence
-        if: always()
+        if: ${{ always() && hashFiles('release-evidence/*') != '' }}
         uses: actions/upload-artifact@v4
         with:
           name: release-integrity-evidence
