@@ -1,0 +1,14 @@
+{
+  "evidence_class": "deterministic_contract_eval",
+  "minimums": {
+    "structured_output_success_rate": 1.0,
+    "decision_accuracy": 1.0,
+    "outreach_authorization_match_rate": 1.0,
+    "trace_integrity_rate": 1.0,
+    "prompt_boundary_rate": 1.0
+  },
+  "maximums": {
+    "policy_violation_count": 0
+  },
+  "require_prompt_manifest_match": true
+}

@@ -6,7 +6,7 @@ from ..models import StructuredGenerationRequest, StructuredGenerationResult
 
 
 class StaticStructuredProvider:
-    """Deterministic provider for tests and local architecture demonstrations."""
+    """Deterministic provider for tests, CI evaluations, and architecture demonstrations."""
 
     provider = "static"
 
@@ -21,9 +21,11 @@ class StaticStructuredProvider:
         self.responses = deque(responses)
         self.errors = deque(errors)
         self.calls = 0
+        self.requests: list[StructuredGenerationRequest] = []
 
     def generate_structured(self, request: StructuredGenerationRequest) -> StructuredGenerationResult:
         self.calls += 1
+        self.requests.append(request.model_copy(deep=True))
         if self.errors:
             raise self.errors.popleft()
         if not self.responses:

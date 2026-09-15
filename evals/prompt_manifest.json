@@ -1,0 +1,14 @@
+{
+  "revenue_ops.research": {
+    "version": "1.0.0",
+    "sha256": "290a2b208ee1f37b698d20c327da4072ff059f33a4995035da3a084b72092a4b"
+  },
+  "revenue_ops.qualification": {
+    "version": "1.0.0",
+    "sha256": "ca74274e04575ceb1115e7575a0123ddda6f6725abae254114421436699a43f7"
+  },
+  "revenue_ops.outreach": {
+    "version": "1.0.0",
+    "sha256": "e2f1677cef3f63af3b4a3d971f3835e5e3331110fa487f5d38834c92a9f2b98f"
+  }
+}
