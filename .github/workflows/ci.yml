@@ -33,3 +33,8 @@ jobs:
           python scripts/integration_smoke.py salesforce
           python scripts/integration_smoke.py slack
           python scripts/integration_smoke.py smtp
+      - name: Verify AI provider smoke harness is side-effect free by default
+        run: |
+          python scripts/ai_provider_smoke.py openai
+          python scripts/ai_provider_smoke.py anthropic
+          python scripts/ai_provider_smoke.py gemini

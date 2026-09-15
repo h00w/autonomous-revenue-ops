@@ -1,4 +1,4 @@
-from typing import TypeVar, Type
+from typing import Type, TypeVar
 
 from pydantic import BaseModel, ValidationError
 
@@ -16,10 +16,19 @@ _DEFAULT_FALLBACK_KINDS = {
     AIProviderErrorKind.INVALID_RESPONSE,
     AIProviderErrorKind.SCHEMA_VALIDATION,
 }
+_OUTPUT_FAILURE_KINDS = {
+    AIProviderErrorKind.INVALID_RESPONSE,
+    AIProviderErrorKind.SCHEMA_VALIDATION,
+}
 
 
 class ModelRouter:
-    """Ordered model router with bounded, explicit fallback semantics."""
+    """Ordered model router with bounded, explicit fallback semantics.
+
+    Transport/provider failures fall back only when marked retryable. Invalid or
+    schema-invalid model output may fall back once to another configured model.
+    Authentication, refusal, and other non-retryable errors fail closed.
+    """
 
     def __init__(
         self,
@@ -30,7 +39,9 @@ class ModelRouter:
         if not providers:
             raise ValueError("At least one AI provider is required")
         self.providers = providers
-        self.fallback_kinds = fallback_kinds or set(_DEFAULT_FALLBACK_KINDS)
+        self.fallback_kinds = (
+            set(_DEFAULT_FALLBACK_KINDS) if fallback_kinds is None else set(fallback_kinds)
+        )
 
     def generate_typed(
         self,
@@ -67,9 +78,14 @@ class ModelRouter:
                         retryable=exc.retryable,
                     )
                 )
-                can_fallback = exc.kind in self.fallback_kinds and index < len(self.providers) - 1
+                eligible_kind = exc.kind in self.fallback_kinds
+                safe_failure = exc.retryable or exc.kind in _OUTPUT_FAILURE_KINDS
+                can_fallback = eligible_kind and safe_failure and index < len(self.providers) - 1
                 if not can_fallback:
-                    exc.details = {"cause": exc.details, "routing_attempts": [a.model_dump() for a in attempts]}
+                    exc.details = {
+                        "cause": exc.details,
+                        "routing_attempts": [a.model_dump() for a in attempts],
+                    }
                     raise
 
         assert last_error is not None
