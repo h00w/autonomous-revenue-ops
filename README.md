@@ -156,11 +156,11 @@ The goal is that a recruiter, engineering leader, or client can understand the b
 
 ## Current evidence
 
-The canonical `main` Phase 10 gate has already verified the production-candidate core before this publication layer:
+The Phase 11 publication head preserves every production/release gate and adds contract checks for the public proof surfaces:
 
 | Evidence | Result |
 | --- | ---: |
-| Python regression suite | **116/116 passed** |
+| Python regression suite | **119/119 passed** |
 | Deterministic policy benchmark | **6/6 (100%)** |
 | Structured-output success | **100%** |
 | Deterministic decision accuracy | **100%** |
@@ -171,6 +171,7 @@ The canonical `main` Phase 10 gate has already verified the production-candidate
 | Agent evaluation cases | **7** |
 | Default OpenAI / Anthropic / Gemini external calls | **0** |
 | Default HubSpot / Salesforce / Slack / SMTP calls | **0** |
+| Public surface contract tests | **3/3 passed** |
 | Release version contract | **PASS / v0.10.0** |
 | Release-integrity verification | **PASS** |
 | Hardened container liveness | **HTTP 200 / ok** |
@@ -406,7 +407,7 @@ The workflow is `main`-only, requires explicit sandbox/test/staging acknowledgem
 | 8 — Deployment hardening & SLO evidence | ✅ Complete |
 | 9 — Release integrity & public proof | ✅ Complete |
 | 10 — Retained live validation evidence | ✅ Framework complete · 🔬 external execution pending |
-| 11 — Public demo & distribution surfaces | 🚧 Publication implementation in progress |
+| 11 — Public demo & distribution surfaces | ✅ Source complete · 🌐 external deployments pending |
 
 ---
 
@@ -474,7 +475,7 @@ GitHub source
 
 ## Reference design lineage
 
-This project was informed by patterns commonly used in practical AI automation portfolios: visual workflows, structured AI output, CRM integration, human-readable business flows, and deployable proof surfaces. The implementation here extends those ideas with deterministic authorization, durable state, security boundaries, release engineering, evaluation gates, operational telemetry, and retained evidence rather than copying reference code. The reference portfolio structure that influenced the presentation emphasizes business problems, readable workflow diagrams, importable automation assets, setup documentation, and explicit engineering decisions. fileciteturn574file0
+The presentation borrows a useful portfolio pattern: state the business problem clearly, make the workflow visually readable, expose deployable artifacts, document setup, and explain the engineering decisions. This implementation extends that pattern with deterministic authorization, durable state, security boundaries, release engineering, evaluation gates, operational telemetry, and retained evidence rather than treating an AI workflow as production-ready by default.
 
 ---
 
