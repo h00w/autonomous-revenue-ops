@@ -23,6 +23,7 @@ from src.evidence.live_validation import (  # noqa: E402
     fingerprint_identifier,
     runtime_fingerprint,
     utc_now,
+    validate_release_binding,
     write_live_validation_bundle,
 )
 from src.integrations.factory import (  # noqa: E402
@@ -33,14 +34,28 @@ from src.integrations.factory import (  # noqa: E402
 from src.integrations.models import CRMLeadRecord, EmailMessage  # noqa: E402
 
 
+def _secret_configured(value) -> bool:
+    if value is None:
+        return False
+    getter = getattr(value, "get_secret_value", None)
+    raw = getter() if callable(getter) else str(value)
+    return bool(raw.strip())
+
+
+def _smoke_email() -> str:
+    value = (os.getenv("ARO_SMOKE_EMAIL") or "").strip()
+    if not value:
+        raise SystemExit("ARO_SMOKE_EMAIL must be explicitly configured for CRM/SMTP live smoke execution")
+    return value
+
+
 def smoke_record() -> CRMLeadRecord:
-    email = os.getenv("ARO_SMOKE_EMAIL", "aro-smoke@example.com")
     return CRMLeadRecord(
-        external_key=os.getenv("ARO_SMOKE_EXTERNAL_KEY", "aro_phase10_smoke"),
-        email=email,
-        first_name=os.getenv("ARO_SMOKE_FIRST_NAME", "ARO"),
-        last_name=os.getenv("ARO_SMOKE_LAST_NAME", "SmokeTest"),
-        company=os.getenv("ARO_SMOKE_COMPANY", "Autonomous Revenue Ops Test"),
+        external_key=(os.getenv("ARO_SMOKE_EXTERNAL_KEY") or "aro_phase10_smoke").strip(),
+        email=_smoke_email(),
+        first_name=(os.getenv("ARO_SMOKE_FIRST_NAME") or "ARO").strip(),
+        last_name=(os.getenv("ARO_SMOKE_LAST_NAME") or "SmokeTest").strip(),
+        company=(os.getenv("ARO_SMOKE_COMPANY") or "Autonomous Revenue Ops Test").strip(),
         title="Integration Smoke Test",
         source="Other",
     )
@@ -54,7 +69,7 @@ def _runtime(settings: Settings, provider: str) -> dict:
             subject_kind="integration",
             subject_name=provider,
             target_url=settings.hubspot_base_url,
-            credential_configured=settings.hubspot_access_token is not None,
+            credential_configured=_secret_configured(settings.hubspot_access_token),
         )
     if provider == "salesforce":
         return runtime_fingerprint(
@@ -63,7 +78,7 @@ def _runtime(settings: Settings, provider: str) -> dict:
             subject_kind="integration",
             subject_name=provider,
             target_url=settings.salesforce_instance_url,
-            credential_configured=settings.salesforce_access_token is not None,
+            credential_configured=_secret_configured(settings.salesforce_access_token),
             extra={"api_root": settings.salesforce_api_root},
         )
     if provider == "slack":
@@ -72,7 +87,7 @@ def _runtime(settings: Settings, provider: str) -> dict:
             service_version=settings.service_version,
             subject_kind="integration",
             subject_name=provider,
-            credential_configured=settings.slack_webhook_url is not None,
+            credential_configured=_secret_configured(settings.slack_webhook_url),
         )
     smtp_target = f"smtp://{settings.smtp_host}:{settings.smtp_port}" if settings.smtp_host else None
     return runtime_fingerprint(
@@ -81,9 +96,56 @@ def _runtime(settings: Settings, provider: str) -> dict:
         subject_kind="integration",
         subject_name=provider,
         target_url=smtp_target,
-        credential_configured=bool(settings.smtp_username or settings.smtp_password),
+        credential_configured=bool((settings.smtp_host or "").strip()),
         extra={"starttls": settings.smtp_use_starttls},
     )
+
+
+def _preflight_provider(settings: Settings, provider: str) -> None:
+    if provider == "hubspot":
+        if not _secret_configured(settings.hubspot_access_token):
+            raise SystemExit("ARO_HUBSPOT_ACCESS_TOKEN is required for HubSpot live smoke execution")
+        _smoke_email()
+    elif provider == "salesforce":
+        if not (settings.salesforce_instance_url or "").strip():
+            raise SystemExit("ARO_SALESFORCE_INSTANCE_URL is required for Salesforce live smoke execution")
+        if not _secret_configured(settings.salesforce_access_token):
+            raise SystemExit("ARO_SALESFORCE_ACCESS_TOKEN is required for Salesforce live smoke execution")
+        _smoke_email()
+    elif provider == "slack":
+        if not _secret_configured(settings.slack_webhook_url):
+            raise SystemExit("ARO_SLACK_WEBHOOK_URL is required for Slack live smoke execution")
+    else:
+        if not (settings.smtp_host or "").strip():
+            raise SystemExit("ARO_SMTP_HOST is required for SMTP live smoke execution")
+        if not (settings.smtp_from_email or "").strip():
+            raise SystemExit("ARO_SMTP_FROM_EMAIL is required for SMTP live smoke execution")
+        _smoke_email()
+
+
+def _write_result(
+    *,
+    args,
+    settings: Settings,
+    started_at: str,
+    status: str,
+    result_payload: dict,
+) -> dict:
+    evidence = build_live_validation_evidence(
+        evidence_class="live_integration_smoke",
+        subject={"kind": "integration", "name": args.provider},
+        executed=True,
+        status=status,
+        external_calls=1,
+        service_version=settings.service_version,
+        runtime=_runtime(settings, args.provider),
+        result=result_payload,
+        root=ROOT,
+        release_manifest=args.release_manifest,
+        started_at=started_at,
+        finished_at=utc_now(),
+    )
+    return write_live_validation_bundle(evidence, args.evidence_dir)
 
 
 def main() -> None:
@@ -115,53 +177,72 @@ def main() -> None:
     if args.evidence_dir is None:
         raise SystemExit("--evidence-dir is required with --execute so the side effect is retained as verifiable evidence")
 
-    started_at = utc_now()
-    result_payload: dict
-    if args.provider in {"hubspot", "salesforce"}:
-        adapter = build_crm_adapter(settings, args.provider)
-        try:
-            result = adapter.upsert_lead(smoke_record())
-        finally:
-            adapter.close()
-        result_payload = {
-            "provider": result.provider,
-            "record_id_sha256": fingerprint_identifier(result.record_id),
-            "created": result.created,
-            "updated": result.updated,
-        }
-    elif args.provider == "slack":
-        notifier = build_slack_notifier(settings)
-        try:
-            result = notifier.send("Autonomous Revenue Ops Phase 10 retained integration smoke test")
-        finally:
-            notifier.close()
-        result_payload = {"provider": result.provider, "delivered": result.delivered}
-    else:
-        adapter = build_smtp_adapter(settings)
-        result = adapter.send(
-            EmailMessage(
-                to=os.getenv("ARO_SMOKE_EMAIL", "aro-smoke@example.com"),
-                subject="Autonomous Revenue Ops Phase 10 retained smoke test",
-                text="Explicit sandbox/test integration smoke from the retained live-validation harness.",
-            )
-        )
-        result_payload = {"provider": result.provider, "delivered": result.delivered}
-
-    evidence = build_live_validation_evidence(
-        evidence_class="live_integration_smoke",
-        subject={"kind": "integration", "name": args.provider},
-        executed=True,
-        status="success",
-        external_calls=1,
+    validate_release_binding(
         service_version=settings.service_version,
-        runtime=_runtime(settings, args.provider),
-        result=result_payload,
         root=ROOT,
         release_manifest=args.release_manifest,
-        started_at=started_at,
-        finished_at=utc_now(),
     )
-    bundle = write_live_validation_bundle(evidence, args.evidence_dir)
+    _preflight_provider(settings, args.provider)
+    started_at = utc_now()
+
+    try:
+        if args.provider in {"hubspot", "salesforce"}:
+            adapter = build_crm_adapter(settings, args.provider)
+            try:
+                result = adapter.upsert_lead(smoke_record())
+            finally:
+                adapter.close()
+            result_payload = {
+                "provider": result.provider,
+                "record_id_sha256": fingerprint_identifier(result.record_id),
+                "created": result.created,
+                "updated": result.updated,
+            }
+        elif args.provider == "slack":
+            notifier = build_slack_notifier(settings)
+            try:
+                result = notifier.send("Autonomous Revenue Ops Phase 10 retained integration smoke test")
+            finally:
+                notifier.close()
+            result_payload = {"provider": result.provider, "delivered": result.delivered}
+        else:
+            adapter = build_smtp_adapter(settings)
+            result = adapter.send(
+                EmailMessage(
+                    to=_smoke_email(),
+                    subject="Autonomous Revenue Ops Phase 10 retained smoke test",
+                    text="Explicit sandbox/test integration smoke from the retained live-validation harness.",
+                )
+            )
+            result_payload = {"provider": result.provider, "delivered": result.delivered}
+    except Exception as exc:
+        bundle = _write_result(
+            args=args,
+            settings=settings,
+            started_at=started_at,
+            status="failed",
+            result_payload={"error_class": exc.__class__.__name__},
+        )
+        print(
+            json.dumps(
+                {
+                    "status": "failed",
+                    "provider": args.provider,
+                    "error_class": exc.__class__.__name__,
+                    "bundle": bundle,
+                },
+                sort_keys=True,
+            )
+        )
+        raise SystemExit(1) from exc
+
+    bundle = _write_result(
+        args=args,
+        settings=settings,
+        started_at=started_at,
+        status="success",
+        result_payload=result_payload,
+    )
     print(json.dumps({"status": "success", "provider": args.provider, "bundle": bundle}, sort_keys=True))
 
 
