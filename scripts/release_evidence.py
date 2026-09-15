@@ -31,8 +31,7 @@ TRACKED_INPUTS = (
     "scripts/verify_release_evidence.py",
     "scripts/release_version_check.py",
     "Makefile",
-    ".github/workflows/ci.yml",
-    ".github/workflows/release.yml",
+    ".github/workflows",
 )
 
 
