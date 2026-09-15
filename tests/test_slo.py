@@ -20,8 +20,18 @@ def test_slo_report_passes_for_healthy_samples():
 
 
 def test_slo_report_fails_when_availability_or_latency_misses_target():
-    samples = [sample() for _ in range(19)] + [sample(live=False, ready=False, latency=900.0)]
-    report = evaluate_slo(samples, SLOTargets(availability_target=0.99, readiness_target=0.99, p95_probe_latency_ms_target=500.0))
+    samples = [sample() for _ in range(18)] + [
+        sample(live=False, ready=False, latency=900.0),
+        sample(live=False, ready=False, latency=900.0),
+    ]
+    report = evaluate_slo(
+        samples,
+        SLOTargets(
+            availability_target=0.99,
+            readiness_target=0.99,
+            p95_probe_latency_ms_target=500.0,
+        ),
+    )
     assert report.passed is False
     assert "availability_below_target" in report.failures
     assert "readiness_below_target" in report.failures
