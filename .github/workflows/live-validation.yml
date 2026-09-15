@@ -99,7 +99,6 @@ jobs:
           ARO_SALESFORCE_ACCESS_TOKEN: ${{ secrets.ARO_SALESFORCE_ACCESS_TOKEN }}
           ARO_SLACK_WEBHOOK_URL: ${{ secrets.ARO_SLACK_WEBHOOK_URL }}
           ARO_SMTP_HOST: ${{ secrets.ARO_SMTP_HOST }}
-          ARO_SMTP_PORT: ${{ secrets.ARO_SMTP_PORT }}
           ARO_SMTP_USERNAME: ${{ secrets.ARO_SMTP_USERNAME }}
           ARO_SMTP_PASSWORD: ${{ secrets.ARO_SMTP_PASSWORD }}
           ARO_SMTP_FROM_EMAIL: ${{ secrets.ARO_SMTP_FROM_EMAIL }}
@@ -107,40 +106,65 @@ jobs:
           ARO_SMOKE_EXTERNAL_KEY: ${{ secrets.ARO_SMOKE_EXTERNAL_KEY }}
         run: |
           set -euo pipefail
+
+          require_var() {
+            local name="$1"
+            if [ -z "${!name:-}" ]; then
+              echo "Required GitHub Actions secret/environment value is missing: $name" >&2
+              exit 1
+            fi
+          }
+
           SAFE_OPERATION="$(printf '%s' "$OPERATION" | tr -cd 'A-Za-z0-9._-')"
           test -n "$SAFE_OPERATION"
           EVIDENCE_DIR="live-validation-evidence/${GITHUB_RUN_ID}-${SAFE_OPERATION}"
           mkdir -p "$EVIDENCE_DIR"
+          echo "evidence_dir=$EVIDENCE_DIR" >> "$GITHUB_OUTPUT"
 
           case "$OPERATION" in
             model-smoke-openai)
+              require_var ARO_OPENAI_API_KEY
               python scripts/ai_provider_smoke.py openai --execute --evidence-dir "$EVIDENCE_DIR"
               ;;
             model-smoke-anthropic)
+              require_var ARO_ANTHROPIC_API_KEY
               python scripts/ai_provider_smoke.py anthropic --execute --evidence-dir "$EVIDENCE_DIR"
               ;;
             model-smoke-gemini)
+              require_var ARO_GEMINI_API_KEY
               python scripts/ai_provider_smoke.py gemini --execute --evidence-dir "$EVIDENCE_DIR"
               ;;
             model-eval-openai)
+              require_var ARO_OPENAI_API_KEY
               python evals/live_agent_eval.py openai --execute --enforce --evidence-dir "$EVIDENCE_DIR"
               ;;
             model-eval-anthropic)
+              require_var ARO_ANTHROPIC_API_KEY
               python evals/live_agent_eval.py anthropic --execute --enforce --evidence-dir "$EVIDENCE_DIR"
               ;;
             model-eval-gemini)
+              require_var ARO_GEMINI_API_KEY
               python evals/live_agent_eval.py gemini --execute --enforce --evidence-dir "$EVIDENCE_DIR"
               ;;
             hubspot-smoke)
+              require_var ARO_HUBSPOT_ACCESS_TOKEN
+              require_var ARO_SMOKE_EMAIL
               python scripts/integration_smoke.py hubspot --execute --evidence-dir "$EVIDENCE_DIR"
               ;;
             salesforce-smoke)
+              require_var ARO_SALESFORCE_INSTANCE_URL
+              require_var ARO_SALESFORCE_ACCESS_TOKEN
+              require_var ARO_SMOKE_EMAIL
               python scripts/integration_smoke.py salesforce --execute --evidence-dir "$EVIDENCE_DIR"
               ;;
             slack-smoke)
+              require_var ARO_SLACK_WEBHOOK_URL
               python scripts/integration_smoke.py slack --execute --evidence-dir "$EVIDENCE_DIR"
               ;;
             smtp-smoke)
+              require_var ARO_SMTP_HOST
+              require_var ARO_SMTP_FROM_EMAIL
+              require_var ARO_SMOKE_EMAIL
               python scripts/integration_smoke.py smtp --execute --evidence-dir "$EVIDENCE_DIR"
               ;;
             deployment-probe)
@@ -175,9 +199,9 @@ jobs:
           esac
 
           python scripts/verify_live_evidence.py "$EVIDENCE_DIR"
-          echo "evidence_dir=$EVIDENCE_DIR" >> "$GITHUB_OUTPUT"
 
       - name: Upload retained live-validation evidence
+        if: ${{ always() && steps.validation.outputs.evidence_dir != '' && hashFiles(format('{0}/*', steps.validation.outputs.evidence_dir)) != '' }}
         uses: actions/upload-artifact@v4
         with:
           name: live-validation-${{ inputs.operation }}-${{ github.run_id }}
