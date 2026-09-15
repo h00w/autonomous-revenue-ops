@@ -14,11 +14,11 @@
 | Phase | Status | Evidence |
 | --- | --- | --- |
 | Phase 0 — Foundation & publication skeleton | ✅ Complete | policy engine, tests, eval dataset, Gradio proof, HF publication workflow |
-| Phase 1 — Core production architecture | 🟡 Implemented / CI-gated | FastAPI, service layer, config, event model, correlation, idempotency, structured logs, health checks |
+| Phase 1 — Core production architecture | ✅ Complete | FastAPI, service layer, config, event model, correlation, idempotency, structured logs, health checks; CI: 14/14 tests + benchmark |
 | Phase 2 — Real SaaS & CRM integrations | ⏭ Next | HubSpot, Salesforce, Slack, email, webhook adapters |
 | Phases 3–10 | Planned | see project roadmap / phase documentation |
 
-Phase 1 acceptance criteria are documented in [`docs/phase-1-completion.md`](docs/phase-1-completion.md).
+Phase 1 acceptance criteria and maturity boundaries are documented in [`docs/phase-1-completion.md`](docs/phase-1-completion.md).
 
 ## System flow
 
@@ -136,7 +136,7 @@ GitHub is the source of truth. `.github/workflows/hf-sync.yml` publishes the rev
 
 ## Current maturity boundary
 
-After Phase 1 this repository is intended to qualify as a **runnable production-architecture proof**, not yet a production-validated service. The current idempotency store is process-local; live CRM providers, auth/signature validation, distributed recovery, persistent DLQ/replay, production SLO evidence and real deployment infrastructure are introduced in later phases.
+After Phase 1 this repository qualifies as a **runnable production-architecture proof**, not yet a production-validated service. The current idempotency store is process-local; live CRM providers, auth/signature validation, distributed recovery, persistent DLQ/replay, production SLO evidence and real deployment infrastructure are introduced in later phases.
 
 ## Business metrics for real deployments
 
