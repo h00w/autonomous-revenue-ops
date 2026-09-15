@@ -1,3 +1,4 @@
+import json
 from pathlib import Path
 
 import yaml
@@ -49,3 +50,15 @@ def test_public_demo_doc_records_live_staging_surfaces():
     assert "https://autonomous-revenue-ops-dashboard.onrender.com" in text
     assert "not Production Validated" in text or "not production validation" in text.lower()
     assert "ephemeral" in text.lower()
+
+
+def test_postman_collection_targets_live_staging_without_credentials():
+    collection = json.loads(
+        (ROOT / "postman" / "autonomous-revenue-ops.postman_collection.json").read_text(
+            encoding="utf-8"
+        )
+    )
+    variables = {item["key"]: item["value"] for item in collection["variable"]}
+
+    assert variables["base_url"] == "https://autonomous-revenue-ops-staging.onrender.com"
+    assert variables["aro_api_key"] == ""
