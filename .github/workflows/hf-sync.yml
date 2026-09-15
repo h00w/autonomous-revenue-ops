@@ -36,7 +36,7 @@ jobs:
           HF_TOKEN: ${{ secrets.HF_TOKEN }}
         run: |
           test -n "$HF_TOKEN"
-          hf auth whoami --token "$HF_TOKEN"
+          hf auth whoami
       - name: Publish Space
         env:
           HF_TOKEN: ${{ secrets.HF_TOKEN }}
