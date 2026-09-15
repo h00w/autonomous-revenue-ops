@@ -1,5 +1,7 @@
 from collections import deque
 
+import pytest
+
 from src.ai.models import QualificationRecommendation, ResearchOutput, SupervisedLeadResult
 from src.models import Decision, LeadInput, PolicyResult
 from src.orchestration.engine import WorkflowOrchestrator
@@ -96,6 +98,9 @@ def test_human_review_requires_explicit_approval_before_execution():
     assert run.status == WorkflowRunStatus.WAITING_HUMAN_REVIEW
     assert run.execution_authorized is False
 
+    with pytest.raises(ValueError, match="not ready"):
+        engine.complete_execution(run.run_id, ExecutionReceipt(executor="n8n"))
+
     approved = engine.approve(
         run.run_id,
         HumanApproval(approved=True, reviewer="revops@example.com", note="Verified manually"),
@@ -103,6 +108,18 @@ def test_human_review_requires_explicit_approval_before_execution():
     assert approved.status == WorkflowRunStatus.READY_FOR_EXECUTION
     assert approved.execution_authorized is True
     assert approved.result.policy.authorized_for_outreach is False
+
+
+def test_human_rejection_completes_without_execution_authorization():
+    evaluator = QueueEvaluator([result(Decision.HUMAN_REVIEW, False)])
+    engine = WorkflowOrchestrator(evaluator, InMemoryWorkflowRunStore())
+    run = engine.start(StartLeadWorkflowRequest(lead=lead())).run
+    rejected = engine.approve(
+        run.run_id,
+        HumanApproval(approved=False, reviewer="reviewer@example.com", note="Not appropriate"),
+    )
+    assert rejected.status == WorkflowRunStatus.COMPLETED
+    assert rejected.execution_authorized is False
 
 
 def test_research_resume_reruns_evaluation_and_can_become_ready():
@@ -121,6 +138,15 @@ def test_research_resume_reruns_evaluation_and_can_become_ready():
     assert resumed.status == WorkflowRunStatus.READY_FOR_EXECUTION
     assert resumed.execution_authorized is True
     assert evaluator.calls == 2
+
+
+def test_blocked_run_completes_without_execution_authorization():
+    evaluator = QueueEvaluator([result(Decision.BLOCK, False)])
+    engine = WorkflowOrchestrator(evaluator, InMemoryWorkflowRunStore())
+    run = engine.start(StartLeadWorkflowRequest(lead=lead())).run
+    assert run.status == WorkflowRunStatus.COMPLETED
+    assert run.execution_authorized is False
+    assert run.execution_receipt is None
 
 
 def test_completion_requires_ready_and_authorized_state():
