@@ -16,6 +16,7 @@ from src.evidence.live_validation import (  # noqa: E402
     build_live_validation_evidence,
     runtime_fingerprint,
     utc_now,
+    validate_release_binding,
     write_live_validation_bundle,
 )
 from src.models import LeadInput  # noqa: E402
@@ -25,6 +26,14 @@ DATASET = ROOT / "data" / "agent_eval_cases.jsonl"
 
 def load_cases() -> list[dict]:
     return [json.loads(line) for line in DATASET.read_text(encoding="utf-8").splitlines() if line.strip()]
+
+
+def _secret_configured(value) -> bool:
+    if value is None:
+        return False
+    getter = getattr(value, "get_secret_value", None)
+    raw = getter() if callable(getter) else str(value)
+    return bool(raw.strip())
 
 
 def _provider_runtime(settings: Settings, provider: str) -> dict:
@@ -38,7 +47,7 @@ def _provider_runtime(settings: Settings, provider: str) -> dict:
         subject_name=provider,
         model=model,
         target_url=base_url,
-        credential_configured=credential is not None,
+        credential_configured=_secret_configured(credential),
         extra={"ai_timeout_seconds": settings.ai_timeout_seconds},
     )
 
@@ -72,6 +81,15 @@ def main() -> None:
         raise SystemExit("--evidence-dir is required with --execute so live results are retained and verifiable")
 
     settings = Settings(ai_provider_order=args.provider)
+    validate_release_binding(
+        service_version=settings.service_version,
+        root=ROOT,
+        release_manifest=args.release_manifest,
+    )
+    credential = getattr(settings, f"{args.provider}_api_key")
+    if not _secret_configured(credential):
+        raise SystemExit(f"A non-empty {args.provider} API credential is required before live evaluation")
+
     router = build_ai_router(settings)
     supervisor = RevenueOpsSupervisor(router)
     rows = []
@@ -106,7 +124,7 @@ def main() -> None:
                 rows.append(
                     {
                         "case_id": case["case_id"],
-                        "error": f"{exc.__class__.__name__}: {exc}",
+                        "error_class": exc.__class__.__name__,
                         "decision_ok": False,
                     }
                 )
