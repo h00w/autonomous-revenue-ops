@@ -1,0 +1,4 @@
+gradio>=5.0
+pydantic>=2.8
+email-validator>=2.2
+pytest>=8.0
