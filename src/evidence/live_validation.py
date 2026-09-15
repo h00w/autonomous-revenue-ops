@@ -6,7 +6,6 @@ import os
 import platform
 import re
 import subprocess
-import sys
 import uuid
 from datetime import datetime, timezone
 from pathlib import Path
@@ -65,6 +64,13 @@ def resolve_source_commit(root: Path = ROOT, explicit: str | None = None) -> str
     return _git(root, "rev-parse", "HEAD")
 
 
+def _validated_source_commit(root: Path, explicit: str | None = None) -> str:
+    commit = resolve_source_commit(root, explicit)
+    if not re.fullmatch(r"[0-9a-fA-F]{40}", commit):
+        raise ValueError(f"source_commit must be a 40-character git SHA: {commit}")
+    return commit
+
+
 def sanitize_url(value: str | None) -> str | None:
     """Retain a useful target/origin while removing credentials, query and fragment."""
     if not value:
@@ -73,8 +79,12 @@ def sanitize_url(value: str | None) -> str | None:
     if not parsed.scheme or not parsed.netloc:
         return value.split("?", 1)[0].split("#", 1)[0]
     host = parsed.hostname or ""
-    if parsed.port:
-        host = f"{host}:{parsed.port}"
+    try:
+        port = parsed.port
+    except ValueError:
+        port = None
+    if port:
+        host = f"{host}:{port}"
     return urlunsplit((parsed.scheme, host, parsed.path or "", "", ""))
 
 
@@ -177,6 +187,25 @@ def _release_binding(
     }
 
 
+def validate_release_binding(
+    *,
+    service_version: str,
+    root: Path = ROOT,
+    release_manifest: Path | None = None,
+    source_commit: str | None = None,
+) -> dict[str, Any]:
+    """Fail before a live side effect unless release provenance matches this source/version."""
+    root = root.resolve()
+    commit = _validated_source_commit(root, source_commit)
+    return _release_binding(
+        root,
+        release_manifest,
+        source_commit=commit,
+        service_version=service_version,
+        required=True,
+    )
+
+
 def build_live_validation_evidence(
     *,
     evidence_class: str,
@@ -196,9 +225,7 @@ def build_live_validation_evidence(
     finished_at: str | None = None,
 ) -> dict[str, Any]:
     root = root.resolve()
-    commit = resolve_source_commit(root, source_commit)
-    if not re.fullmatch(r"[0-9a-fA-F]{40}", commit):
-        raise ValueError(f"source_commit must be a 40-character git SHA: {commit}")
+    commit = _validated_source_commit(root, source_commit)
     if external_calls < 0:
         raise ValueError("external_calls cannot be negative")
     if executed and evidence_class in LIVE_CLASSES and external_calls < 1:
