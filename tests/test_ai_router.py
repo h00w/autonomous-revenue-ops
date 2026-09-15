@@ -52,3 +52,15 @@ def test_router_fails_closed_on_authentication_error():
         ModelRouter([first, second]).generate_typed(_request(), Output)
     assert caught.value.kind == AIProviderErrorKind.AUTHENTICATION
     assert second.calls == 0
+
+
+def test_router_fails_closed_on_model_refusal():
+    first = StaticStructuredProvider(
+        model="primary",
+        errors=[AIProviderError(provider="static", kind=AIProviderErrorKind.REFUSAL, message="refused", retryable=False)],
+    )
+    second = StaticStructuredProvider([{"value": 7}], model="fallback")
+    with pytest.raises(AIProviderError) as caught:
+        ModelRouter([first, second]).generate_typed(_request(), Output)
+    assert caught.value.kind == AIProviderErrorKind.REFUSAL
+    assert second.calls == 0
