@@ -1,0 +1,45 @@
+name: Publish to Hugging Face
+
+on:
+  workflow_dispatch:
+  push:
+    branches: [main]
+    paths:
+      - 'app.py'
+      - 'requirements.txt'
+      - 'data/**'
+      - 'hf/**'
+      - '.github/workflows/hf-sync.yml'
+
+jobs:
+  publish:
+    runs-on: ubuntu-latest
+    permissions:
+      contents: read
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: '3.12'
+      - name: Install Hugging Face client
+        run: python -m pip install --upgrade huggingface_hub
+      - name: Prepare publication folders
+        run: |
+          mkdir -p .publish/space .publish/model .publish/dataset
+          cp app.py requirements.txt .publish/space/
+          cp hf/space/README.md .publish/space/README.md
+          cp hf/model/README.md .publish/model/README.md
+          cp hf/dataset/README.md .publish/dataset/README.md
+          cp data/lead_qualification_eval.jsonl .publish/dataset/
+      - name: Publish Space
+        env:
+          HF_TOKEN: ${{ secrets.HF_TOKEN }}
+        run: huggingface-cli upload h0000w/autonomous-revenue-ops .publish/space . --repo-type space --token "$HF_TOKEN"
+      - name: Publish dataset
+        env:
+          HF_TOKEN: ${{ secrets.HF_TOKEN }}
+        run: huggingface-cli upload h0000w/autonomous-revenue-ops .publish/dataset . --repo-type dataset --token "$HF_TOKEN"
+      - name: Publish model/system card
+        env:
+          HF_TOKEN: ${{ secrets.HF_TOKEN }}
+        run: huggingface-cli upload h0000w/autonomous-revenue-ops .publish/model . --repo-type model --token "$HF_TOKEN"
