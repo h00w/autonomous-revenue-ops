@@ -18,6 +18,9 @@ data/*.db
 data/*.db-shm
 data/*.db-wal
 
+# Generated evaluation evidence
+agent-eval-report.json
+
 # Local tooling / OS
 .DS_Store
 .vscode/
