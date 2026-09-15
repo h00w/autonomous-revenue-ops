@@ -40,3 +40,5 @@ jobs:
           python scripts/ai_provider_smoke.py gemini
       - name: Verify workflow smoke harness is side-effect free by default
         run: python scripts/workflow_smoke.py
+      - name: Verify reliability/security smoke harness makes no network calls
+        run: python scripts/reliability_smoke.py
