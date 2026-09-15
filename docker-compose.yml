@@ -1,0 +1,41 @@
+services:
+  app:
+    build:
+      context: .
+      target: runtime
+    image: autonomous-revenue-ops:0.8.0
+    init: true
+    restart: unless-stopped
+    ports:
+      - "8000:8000"
+    environment:
+      ARO_ENVIRONMENT: production
+      ARO_SERVICE_VERSION: 0.8.0
+      ARO_DEPLOYMENT_REPLICA_COUNT: "1"
+      ARO_WORKFLOW_STORE_BACKEND: sqlite
+      ARO_WORKFLOW_DB_PATH: /app/data/workflows.sqlite3
+      ARO_SECURITY_DB_PATH: /app/data/security.sqlite3
+      ARO_DEAD_LETTER_DB_PATH: /app/data/dead_letters.sqlite3
+      ARO_WORKFLOW_API_KEY: ${ARO_WORKFLOW_API_KEY:?ARO_WORKFLOW_API_KEY is required}
+      ARO_WEBHOOK_SIGNING_SECRET: ${ARO_WEBHOOK_SIGNING_SECRET:?ARO_WEBHOOK_SIGNING_SECRET is required}
+      ARO_OPENAI_API_KEY: ${ARO_OPENAI_API_KEY:-}
+      ARO_ANTHROPIC_API_KEY: ${ARO_ANTHROPIC_API_KEY:-}
+      ARO_GEMINI_API_KEY: ${ARO_GEMINI_API_KEY:-}
+    read_only: true
+    tmpfs:
+      - /tmp:rw,noexec,nosuid,size=64m
+    cap_drop:
+      - ALL
+    security_opt:
+      - no-new-privileges:true
+    volumes:
+      - aro-data:/app/data
+    healthcheck:
+      test: ["CMD", "python", "-c", "import urllib.request; urllib.request.urlopen('http://127.0.0.1:8000/health/live', timeout=2).read()"]
+      interval: 30s
+      timeout: 3s
+      retries: 3
+      start_period: 10s
+
+volumes:
+  aro-data:
