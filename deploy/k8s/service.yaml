@@ -1,0 +1,12 @@
+apiVersion: v1
+kind: Service
+metadata:
+  name: autonomous-revenue-ops
+spec:
+  selector:
+    app.kubernetes.io/name: autonomous-revenue-ops
+  ports:
+    - name: http
+      port: 80
+      targetPort: http
+  type: ClusterIP

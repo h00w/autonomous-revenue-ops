@@ -58,3 +58,32 @@ jobs:
         run: python scripts/reliability_smoke.py
       - name: Verify analytics smoke separates measured and scenario evidence
         run: python scripts/analytics_smoke.py
+      - name: Validate deployment hardening contract
+        run: python scripts/deployment_contract.py
+      - name: Verify SLO probe is opt-in by default
+        run: python scripts/slo_probe.py
+      - name: Build and boot hardened API container
+        run: |
+          set -euo pipefail
+          docker build -t autonomous-revenue-ops:ci .
+          docker volume create aro-ci-data >/dev/null
+          cleanup() {
+            docker rm -f aro-ci >/dev/null 2>&1 || true
+            docker volume rm aro-ci-data >/dev/null 2>&1 || true
+          }
+          trap cleanup EXIT
+          docker run -d \
+            --name aro-ci \
+            --read-only \
+            --tmpfs /tmp:rw,noexec,nosuid,size=64m \
+            --cap-drop ALL \
+            --security-opt no-new-privileges:true \
+            --mount source=aro-ci-data,target=/app/data \
+            -p 18000:8000 \
+            -e ARO_ENVIRONMENT=test \
+            -e ARO_SERVICE_VERSION=0.8.0 \
+            -e ARO_DEPLOYMENT_REPLICA_COUNT=1 \
+            autonomous-revenue-ops:ci >/dev/null
+          test "$(docker inspect --format '{{.Config.User}}' aro-ci)" = "10001:10001"
+          python scripts/container_smoke.py --base-url http://127.0.0.1:18000
+          docker inspect --format '{{.State.Health.Status}}' aro-ci

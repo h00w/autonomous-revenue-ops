@@ -3,12 +3,13 @@ import time
 from typing import Annotated
 from uuid import uuid4
 
-from fastapi import FastAPI, Header, Request, Response
+from fastapi import FastAPI, Header, Request, Response, status as http_status
 
 from .analytics.api import router as analytics_router
 from .config import get_settings
 from .logging_config import configure_logging
 from .models import HealthResponse, LeadEvaluationRequest, WorkflowResponse
+from .operations.readiness import deployment_readiness_checks
 from .orchestration.api import router as workflow_router
 from .security.api import router as webhook_router
 from .service import RevenueOpsService
@@ -37,13 +38,19 @@ def create_app() -> FastAPI:
         return HealthResponse(status="ok", service=settings.app_name, version=settings.service_version, environment=settings.environment)
 
     @app.get("/health/ready", response_model=HealthResponse, tags=["health"])
-    def readiness() -> HealthResponse:
+    def readiness(response: Response) -> HealthResponse:
         checks = service.readiness_checks()
-        if settings.environment == "production":
-            checks["workflow_api_auth"] = "ok" if settings.workflow_api_key else "missing"
-            checks["webhook_signing"] = "ok" if settings.webhook_signing_secret else "missing"
-        status = "ok" if all(value == "ok" for value in checks.values()) else "degraded"
-        return HealthResponse(status=status, service=settings.app_name, version=settings.service_version, environment=settings.environment, checks=checks)
+        checks.update(deployment_readiness_checks(settings))
+        ready = all(value == "ok" for value in checks.values())
+        if not ready:
+            response.status_code = http_status.HTTP_503_SERVICE_UNAVAILABLE
+        return HealthResponse(
+            status="ok" if ready else "degraded",
+            service=settings.app_name,
+            version=settings.service_version,
+            environment=settings.environment,
+            checks=checks,
+        )
 
     @app.post(f"{settings.api_prefix}/leads/evaluate", response_model=WorkflowResponse, tags=["revenue-ops"])
     def evaluate_lead(body: LeadEvaluationRequest, request: Request, idempotency_key: Annotated[str | None, Header(alias="Idempotency-Key")] = None) -> WorkflowResponse:

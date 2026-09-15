@@ -1,0 +1,13 @@
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: autonomous-revenue-ops-config
+data:
+  ARO_ENVIRONMENT: "production"
+  ARO_SERVICE_VERSION: "0.8.0"
+  ARO_DEPLOYMENT_REPLICA_COUNT: "1"
+  ARO_WORKFLOW_STORE_BACKEND: "sqlite"
+  ARO_WORKFLOW_DB_PATH: "/app/data/workflows.sqlite3"
+  ARO_SECURITY_DB_PATH: "/app/data/security.sqlite3"
+  ARO_DEAD_LETTER_DB_PATH: "/app/data/dead_letters.sqlite3"
+  ARO_LOG_LEVEL: "INFO"
