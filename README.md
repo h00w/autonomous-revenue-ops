@@ -7,7 +7,7 @@
 [![Dataset](https://img.shields.io/badge/Hugging%20Face-Dataset-FFD21E?logo=huggingface&logoColor=000)](https://huggingface.co/datasets/h0000w/autonomous-revenue-ops)
 [![System Card](https://img.shields.io/badge/Hugging%20Face-System%20Card-FFD21E?logo=huggingface&logoColor=000)](https://huggingface.co/h0000w/autonomous-revenue-ops)
 
-**Proof chain:** GitHub source → typed production API → deterministic policy → bounded SaaS adapters → regression/evaluation gates → reviewer Space → Hugging Face publication.
+**Proof chain:** GitHub source → typed production API → multi-model structured reasoning → deterministic policy → bounded SaaS adapters → regression/evaluation gates → reviewer Space → Hugging Face publication.
 
 ## Project phase
 
@@ -15,11 +15,12 @@
 | --- | --- | --- |
 | Phase 0 — Foundation & publication skeleton | ✅ Complete | policy engine, eval dataset, Gradio proof, HF sync |
 | Phase 1 — Core production architecture | ✅ Complete | FastAPI, service layer, config, events, correlation, idempotency, structured logs, health checks |
-| Phase 2 — Real SaaS & CRM integrations | ✅ Contract-complete · 🔬 live validation pending | HubSpot, Salesforce, Slack, SMTP, webhook adapters; 41/41 tests; benchmark 6/6 |
-| Phase 3 — Multi-model AI & agent layer | ⏭ Next | OpenAI, Claude, Gemini, bounded agents, structured outputs |
-| Phases 4–10 | Planned | orchestration → reliability/security → evals → analytics → deployment → public proof → production validation |
+| Phase 2 — Real SaaS & CRM integrations | ✅ Contract-complete · 🔬 live validation pending | HubSpot, Salesforce, Slack, SMTP, webhook adapters; 41/41 tests at merge; benchmark 6/6 |
+| Phase 3 — Multi-model AI & agent layer | ✅ Contract-complete · 🔬 live validation pending | OpenAI, Anthropic, Gemini REST adapters; governed Research/Qualification/Outreach agents; 55/55 tests; benchmark 6/6 |
+| Phase 4 — Workflow orchestration | ⏭ Next | workflow run state, n8n-compatible contracts, approvals, orchestration evidence |
+| Phases 5–10 | Planned | reliability/security → evals → analytics → deployment → public proof → production validation |
 
-The evidence boundary is explicit: Phase 2 provider adapters are implemented and contract-tested, but live-account capability validation requires dedicated sandbox/test credentials and remains required before a final **Production Validated** claim.
+The evidence boundary is explicit: Phase 2 SaaS adapters and Phase 3 AI-provider adapters are implemented and contract-tested. Live-account/model capability validation requires dedicated sandbox/test credentials and remains required before a final **Production Validated** claim.
 
 ## System flow
 
@@ -28,20 +29,24 @@ Inbound lead / SaaS webhook / n8n
   → FastAPI boundary
   → typed validation + normalization
   → correlation + idempotency
-  → evidence / qualification state
+  → multi-model reasoning layer
+      ├─ Research Agent
+      ├─ Qualification Agent
+      └─ controlled provider fallback
   → deterministic policy gate
       ├─ AUTO_ROUTE
       ├─ HUMAN_REVIEW
       ├─ RESEARCH_MORE
       ├─ NURTURE
       └─ BLOCK
+  → Outreach Drafting Agent only when policy authorizes
   → bounded integration layer
       ├─ HubSpot CRM
       ├─ Salesforce CRM
       ├─ Slack
       ├─ SMTP email
       └─ HTTPS webhook
-  → normalized result / IntegrationError
+  → normalized result / error
   → verification / audit / metrics
 ```
 
@@ -64,10 +69,17 @@ Inbound lead / SaaS webhook / n8n
 | Salesforce REST Lead adapter | `src/integrations/crm/salesforce.py` |
 | Slack / SMTP / webhook | `src/integrations/notifications/` |
 | External error normalization | `src/integrations/http.py`, `src/integrations/errors.py` |
-| Provider factories and safe mapping | `src/integrations/factory.py`, `src/integrations/mapping.py` |
-| Regression tests | `tests/` — 41 passing at Phase 2 merge |
+| Multi-model provider contract | `src/ai/base.py` |
+| OpenAI / Anthropic / Gemini REST adapters | `src/ai/providers/` |
+| Structured-output validation | `src/ai/schema.py`, `src/ai/router.py` |
+| Controlled model fallback | `src/ai/router.py` |
+| Versioned prompts | `src/ai/prompts.py` |
+| Research / Qualification / Outreach agents | `src/ai/agents.py` |
+| Deterministic-policy supervisor | `src/ai/supervisor.py` |
+| Regression tests | `tests/` — 55 passing at Phase 3 merge |
 | Policy benchmark | `evals/benchmark.py` — 6/6 |
-| Live validation harness | `scripts/integration_smoke.py` |
+| SaaS live-validation harness | `scripts/integration_smoke.py` |
+| AI-provider validation harness | `scripts/ai_provider_smoke.py` |
 | CI | `.github/workflows/ci.yml` |
 | HF publication | `.github/workflows/hf-sync.yml` |
 
@@ -107,18 +119,27 @@ Endpoints:
 make verify
 ```
 
-This compiles source/scripts, runs all tests, executes the policy benchmark, and verifies that each integration smoke command remains side-effect free by default.
+CI compiles source/scripts, runs the full test suite and policy benchmark, and verifies that SaaS and AI-provider smoke commands remain side-effect free by default.
 
-## Live sandbox validation
+## Live capability validation
 
-Nothing external is contacted unless `--execute` is explicitly supplied:
+Nothing external is contacted unless `--execute` is explicitly supplied.
+
+SaaS example:
 
 ```bash
 python scripts/integration_smoke.py hubspot
 python scripts/integration_smoke.py hubspot --execute
 ```
 
-Equivalent smoke targets exist for `salesforce`, `slack`, and `smtp`. Use only dedicated sandbox/test destinations.
+AI-provider example:
+
+```bash
+python scripts/ai_provider_smoke.py openai
+python scripts/ai_provider_smoke.py openai --execute
+```
+
+Equivalent targets exist for the other configured SaaS and AI providers. Use dedicated sandbox/test credentials only.
 
 ## Documentation
 
@@ -134,11 +155,19 @@ Equivalent smoke targets exist for `salesforce`, `slack`, and `smtp`. Use only d
 - [CRM field mapping](docs/crm-field-mapping.md)
 - [Phase 2 completion gates](docs/phase-2-completion.md)
 
+### Multi-model agents
+- [Agent architecture](docs/agent-architecture.md)
+- [Prompt strategy](docs/prompt-strategy.md)
+- [Model routing](docs/model-routing.md)
+- [Phase 3 completion gates](docs/phase-3-completion.md)
+
 ### ADRs
 - [ADR-001: API vs reviewer UI](docs/adr/001-separate-api-from-reviewer-ui.md)
 - [ADR-002: Phase 1 idempotency](docs/adr/002-idempotency-phase-1.md)
 - [ADR-003: Provider-neutral CRM contract](docs/adr/003-provider-neutral-crm-contract.md)
 - [ADR-004: Normalize errors before retries](docs/adr/004-normalize-errors-before-retry-policy.md)
+- [ADR-005: AI recommends; deterministic policy authorizes](docs/adr/005-ai-recommends-policy-authorizes.md)
+- [ADR-006: Controlled multi-model fallback](docs/adr/006-controlled-model-fallback.md)
 
 ## Hugging Face publication
 
@@ -151,7 +180,7 @@ GitHub is the source of truth. The publication workflow uses the repository `HF_
 
 ## Current maturity boundary
 
-After Phase 2, the repository is a **runnable, contract-tested production-architecture proof**. It is not yet production validated. Remaining controls include real LLM providers and agents, workflow orchestration, durable recovery/DLQ, webhook security, deeper evaluation, operational telemetry, production deployment/SLO evidence, and live-provider capability evidence.
+After Phase 3, the repository is a **runnable, contract-tested multi-model production-architecture proof**. It is not yet production validated. Remaining controls include durable workflow orchestration/recovery, webhook security, retry/circuit-breaking and DLQ behavior, deeper model evaluation, operational telemetry, production deployment/SLO evidence, and live-provider capability evidence.
 
 Synthetic demonstration values are never presented as customer ROI.
 
