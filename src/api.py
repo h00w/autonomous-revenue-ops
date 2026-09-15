@@ -5,6 +5,7 @@ from uuid import uuid4
 
 from fastapi import FastAPI, Header, Request, Response
 
+from .analytics.api import router as analytics_router
 from .config import get_settings
 from .logging_config import configure_logging
 from .models import HealthResponse, LeadEvaluationRequest, WorkflowResponse
@@ -50,6 +51,7 @@ def create_app() -> FastAPI:
 
     app.include_router(workflow_router)
     app.include_router(webhook_router)
+    app.include_router(analytics_router)
     return app
 
 

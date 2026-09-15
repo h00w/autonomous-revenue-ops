@@ -1,4 +1,4 @@
-.PHONY: install test benchmark agent-eval live-eval-dry api demo verify smoke-hubspot smoke-salesforce smoke-slack smoke-smtp smoke-ai smoke-workflow smoke-reliability
+.PHONY: install test benchmark agent-eval live-eval-dry analytics-report api demo verify smoke-hubspot smoke-salesforce smoke-slack smoke-smtp smoke-ai smoke-workflow smoke-reliability smoke-analytics
 
 install:
 	python -m pip install --upgrade pip
@@ -17,6 +17,9 @@ live-eval-dry:
 	python evals/live_agent_eval.py openai
 	python evals/live_agent_eval.py anthropic
 	python evals/live_agent_eval.py gemini
+
+analytics-report:
+	python scripts/analytics_report.py
 
 api:
 	uvicorn src.api:app --reload --host 0.0.0.0 --port 8000
@@ -40,6 +43,8 @@ smoke-workflow:
 	python scripts/workflow_smoke.py
 smoke-reliability:
 	python scripts/reliability_smoke.py
+smoke-analytics:
+	python scripts/analytics_smoke.py
 
 verify:
 	python -m compileall -q src scripts evals
@@ -58,3 +63,4 @@ verify:
 	python scripts/ai_provider_smoke.py gemini
 	python scripts/workflow_smoke.py
 	python scripts/reliability_smoke.py
+	python scripts/analytics_smoke.py

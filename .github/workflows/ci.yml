@@ -56,3 +56,5 @@ jobs:
         run: python scripts/workflow_smoke.py
       - name: Verify reliability/security smoke harness makes no network calls
         run: python scripts/reliability_smoke.py
+      - name: Verify analytics smoke separates measured and scenario evidence
+        run: python scripts/analytics_smoke.py

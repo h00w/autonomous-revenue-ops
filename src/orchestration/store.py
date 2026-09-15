@@ -1,4 +1,3 @@
-import json
 import sqlite3
 import time
 from pathlib import Path
@@ -16,6 +15,7 @@ class WorkflowRunStore(Protocol):
     def acquire_lease(self, run_id: str, owner: str, ttl_seconds: int, *, now: float | None = None) -> bool: ...
     def release_lease(self, run_id: str, owner: str) -> None: ...
     def list_recoverable(self) -> list[WorkflowRun]: ...
+    def list_runs(self, limit: int | None = None) -> list[WorkflowRun]: ...
 
 
 class InMemoryWorkflowRunStore:
@@ -66,21 +66,17 @@ class InMemoryWorkflowRunStore:
                 self._leases.pop(run_id, None)
 
     def list_recoverable(self) -> list[WorkflowRun]:
+        return [run for run in self.list_runs() if run.status == WorkflowRunStatus.RUNNING]
+
+    def list_runs(self, limit: int | None = None) -> list[WorkflowRun]:
         with self._lock:
-            return [
-                run.model_copy(deep=True)
-                for run in self._runs.values()
-                if run.status == WorkflowRunStatus.RUNNING
-            ]
+            runs = sorted(self._runs.values(), key=lambda run: run.created_at, reverse=True)
+            selected = runs if limit is None else runs[:limit]
+            return [run.model_copy(deep=True) for run in selected]
 
 
 class SQLiteWorkflowRunStore:
-    """Restart-safe single-node workflow store with optimistic revisions and leases.
-
-    SQLite is intentionally the Phase 5 durability boundary. It survives process
-    restarts and provides transactional idempotency/lease semantics on one host,
-    but it is not presented as a multi-region or horizontally scaled database.
-    """
+    """Restart-safe single-node workflow store with optimistic revisions and leases."""
 
     def __init__(self, path: str) -> None:
         self.path = path
@@ -181,10 +177,10 @@ class SQLiteWorkflowRunStore:
             )
 
     def list_recoverable(self) -> list[WorkflowRun]:
+        return [run for run in self.list_runs() if run.status == WorkflowRunStatus.RUNNING]
+
+    def list_runs(self, limit: int | None = None) -> list[WorkflowRun]:
         with self._connect() as conn:
             rows = conn.execute("SELECT payload FROM workflow_runs").fetchall()
-        return [
-            run
-            for row in rows
-            if (run := self._decode(row["payload"])).status == WorkflowRunStatus.RUNNING
-        ]
+        runs = sorted((self._decode(row["payload"]) for row in rows), key=lambda run: run.created_at, reverse=True)
+        return runs if limit is None else runs[:limit]
