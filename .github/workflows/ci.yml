@@ -20,13 +20,27 @@ jobs:
           python -m pip install --upgrade pip
           python -m pip install -r requirements.txt
       - name: Compile application modules and scripts
-        run: python -m compileall -q src scripts
+        run: python -m compileall -q src scripts evals
       - name: Import FastAPI application
         run: python -c "from src.api import app; assert app.title == 'Autonomous Revenue Ops'"
       - name: Run tests
         run: python -m pytest -q
       - name: Run policy benchmark
         run: python evals/benchmark.py
+      - name: Run deterministic multi-agent release gate
+        run: python evals/agent_release_gate.py --report agent-eval-report.json
+      - name: Upload agent evaluation evidence
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: agent-eval-report
+          path: agent-eval-report.json
+          if-no-files-found: error
+      - name: Verify live model evaluation harnesses are opt-in
+        run: |
+          python evals/live_agent_eval.py openai
+          python evals/live_agent_eval.py anthropic
+          python evals/live_agent_eval.py gemini
       - name: Verify integration smoke harness is side-effect free by default
         run: |
           python scripts/integration_smoke.py hubspot
