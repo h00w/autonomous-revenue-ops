@@ -5,20 +5,21 @@
 [![CI](https://github.com/h00w/autonomous-revenue-ops/actions/workflows/ci.yml/badge.svg)](https://github.com/h00w/autonomous-revenue-ops/actions/workflows/ci.yml)
 [![Hugging Face Space](https://img.shields.io/badge/Hugging%20Face-Space-FFD21E?logo=huggingface&logoColor=000)](https://huggingface.co/spaces/h0000w/autonomous-revenue-ops)
 [![Dataset](https://img.shields.io/badge/Hugging%20Face-Dataset-FFD21E?logo=huggingface&logoColor=000)](https://huggingface.co/datasets/h0000w/autonomous-revenue-ops)
-[![Model Card](https://img.shields.io/badge/Hugging%20Face-System%20Card-FFD21E?logo=huggingface&logoColor=000)](https://huggingface.co/h0000w/autonomous-revenue-ops)
+[![System Card](https://img.shields.io/badge/Hugging%20Face-System%20Card-FFD21E?logo=huggingface&logoColor=000)](https://huggingface.co/h0000w/autonomous-revenue-ops)
 
-**Proof chain:** GitHub source → typed production API → deterministic policy engine → regression/evaluation gates → reviewer Space → Hugging Face publication.
+**Proof chain:** GitHub source → typed production API → deterministic policy → bounded SaaS adapters → regression/evaluation gates → reviewer Space → Hugging Face publication.
 
 ## Project phase
 
 | Phase | Status | Evidence |
 | --- | --- | --- |
-| Phase 0 — Foundation & publication skeleton | ✅ Complete | policy engine, tests, eval dataset, Gradio proof, HF publication workflow |
-| Phase 1 — Core production architecture | ✅ Complete | FastAPI, service layer, config, event model, correlation, idempotency, structured logs, health checks; CI: 14/14 tests + benchmark |
-| Phase 2 — Real SaaS & CRM integrations | ⏭ Next | HubSpot, Salesforce, Slack, email, webhook adapters |
-| Phases 3–10 | Planned | see project roadmap / phase documentation |
+| Phase 0 — Foundation & publication skeleton | ✅ Complete | policy engine, eval dataset, Gradio proof, HF sync |
+| Phase 1 — Core production architecture | ✅ Complete | FastAPI, service layer, config, events, correlation, idempotency, structured logs, health checks |
+| Phase 2 — Real SaaS & CRM integrations | ✅ Contract-complete · 🔬 live validation pending | HubSpot, Salesforce, Slack, SMTP, webhook adapters; 41/41 tests; benchmark 6/6 |
+| Phase 3 — Multi-model AI & agent layer | ⏭ Next | OpenAI, Claude, Gemini, bounded agents, structured outputs |
+| Phases 4–10 | Planned | orchestration → reliability/security → evals → analytics → deployment → public proof → production validation |
 
-Phase 1 acceptance criteria and maturity boundaries are documented in [`docs/phase-1-completion.md`](docs/phase-1-completion.md).
+The evidence boundary is explicit: Phase 2 provider adapters are implemented and contract-tested, but live-account capability validation requires dedicated sandbox/test credentials and remains required before a final **Production Validated** claim.
 
 ## System flow
 
@@ -34,14 +35,19 @@ Inbound lead / SaaS webhook / n8n
       ├─ RESEARCH_MORE
       ├─ NURTURE
       └─ BLOCK
-  → versioned event envelope
-  → bounded integrations (Phase 2+)
+  → bounded integration layer
+      ├─ HubSpot CRM
+      ├─ Salesforce CRM
+      ├─ Slack
+      ├─ SMTP email
+      └─ HTTPS webhook
+  → normalized result / IntegrationError
   → verification / audit / metrics
 ```
 
-The design intentionally separates **AI recommendation** from **business authorization**. AI may score, classify, summarize, research and propose. Deterministic software policy decides what may execute.
+**AI may propose. Software validates. Policy authorizes. Bounded adapters execute. Verification determines completion.**
 
-## Phase 1 production controls
+## Production controls implemented so far
 
 | Control | Evidence |
 | --- | --- |
@@ -49,21 +55,25 @@ The design intentionally separates **AI recommendation** from **business authori
 | Deterministic authorization | `src/policy.py` |
 | Application service | `src/service.py` |
 | FastAPI boundary | `src/api.py` |
-| Environment configuration | `src/config.py`, `.env.example` |
-| Correlation IDs | API middleware + event envelope |
-| Idempotency | `src/idempotency.py` |
+| Environment/secret configuration | `src/config.py`, `.env.example` |
+| Correlation IDs and event envelope | `src/api.py`, `src/models.py` |
+| Idempotency semantics | `src/idempotency.py` |
 | Structured JSON logging | `src/logging_config.py` |
-| Liveness/readiness | `/health/live`, `/health/ready` |
-| Policy regression tests | `tests/test_policy.py` |
-| Service/API tests | `tests/test_service.py`, `tests/test_api.py` |
-| Evaluation dataset | `data/lead_qualification_eval.jsonl` |
-| Policy benchmark | `evals/benchmark.py` |
+| Provider-neutral CRM contract | `src/integrations/crm/base.py` |
+| HubSpot CRM v3 | `src/integrations/crm/hubspot.py` |
+| Salesforce REST Lead adapter | `src/integrations/crm/salesforce.py` |
+| Slack / SMTP / webhook | `src/integrations/notifications/` |
+| External error normalization | `src/integrations/http.py`, `src/integrations/errors.py` |
+| Provider factories and safe mapping | `src/integrations/factory.py`, `src/integrations/mapping.py` |
+| Regression tests | `tests/` — 41 passing at Phase 2 merge |
+| Policy benchmark | `evals/benchmark.py` — 6/6 |
+| Live validation harness | `scripts/integration_smoke.py` |
 | CI | `.github/workflows/ci.yml` |
-| HF publication sync | `.github/workflows/hf-sync.yml` |
+| HF publication | `.github/workflows/hf-sync.yml` |
 
-## Governed demo decisions
+## Governed policy demo
 
-The current inspectable policy uses demonstration thresholds:
+Current demonstration thresholds:
 
 - score ≥ 80 and confidence ≥ 0.85, with consent and no risk flags → `AUTO_ROUTE`
 - confidence < 0.70 → `RESEARCH_MORE`
@@ -73,7 +83,7 @@ The current inspectable policy uses demonstration thresholds:
 
 These thresholds demonstrate policy mechanics; they are not claims about a particular customer's sales process.
 
-## Run the production API locally
+## Run locally
 
 ```bash
 git clone https://github.com/h00w/autonomous-revenue-ops.git
@@ -84,22 +94,12 @@ cp .env.example .env
 uvicorn src.api:app --reload --host 0.0.0.0 --port 8000
 ```
 
-Then use:
+Endpoints:
 
-- OpenAPI/Swagger: `http://localhost:8000/docs`
-- Liveness: `GET http://localhost:8000/health/live`
-- Readiness: `GET http://localhost:8000/health/ready`
-- Governed lead evaluation: `POST http://localhost:8000/v1/leads/evaluate`
-
-See [`docs/configuration.md`](docs/configuration.md) for a complete request example.
-
-## Run the reviewer demo
-
-```bash
-python app.py
-```
-
-The Gradio surface remains intentionally separate from the production API and is also published as the Hugging Face Space.
+- OpenAPI: `http://localhost:8000/docs`
+- Liveness: `GET /health/live`
+- Readiness: `GET /health/ready`
+- Governed lead evaluation: `POST /v1/leads/evaluate`
 
 ## Verify the repository
 
@@ -107,42 +107,53 @@ The Gradio surface remains intentionally separate from the production API and is
 make verify
 ```
 
-Equivalent commands:
+This compiles source/scripts, runs all tests, executes the policy benchmark, and verifies that each integration smoke command remains side-effect free by default.
+
+## Live sandbox validation
+
+Nothing external is contacted unless `--execute` is explicitly supplied:
 
 ```bash
-python -m compileall -q src
-python -m pytest -q
-python evals/benchmark.py
+python scripts/integration_smoke.py hubspot
+python scripts/integration_smoke.py hubspot --execute
 ```
 
-## Architecture documentation
+Equivalent smoke targets exist for `salesforce`, `slack`, and `smtp`. Use only dedicated sandbox/test destinations.
 
+## Documentation
+
+### Core architecture
 - [System design](docs/system-design.md)
-- [Event, correlation and idempotency model](docs/event-model.md)
+- [Event / correlation / idempotency](docs/event-model.md)
 - [Runtime configuration](docs/configuration.md)
 - [Phase 1 completion gates](docs/phase-1-completion.md)
+
+### Integrations
+- [Integration architecture](docs/integrations.md)
+- [Integration contracts](docs/integration-contracts.md)
+- [CRM field mapping](docs/crm-field-mapping.md)
+- [Phase 2 completion gates](docs/phase-2-completion.md)
+
+### ADRs
 - [ADR-001: API vs reviewer UI](docs/adr/001-separate-api-from-reviewer-ui.md)
-- [ADR-002: Phase 1 idempotency boundary](docs/adr/002-idempotency-phase-1.md)
-- [Original architecture proof](docs/architecture.md)
+- [ADR-002: Phase 1 idempotency](docs/adr/002-idempotency-phase-1.md)
+- [ADR-003: Provider-neutral CRM contract](docs/adr/003-provider-neutral-crm-contract.md)
+- [ADR-004: Normalize errors before retries](docs/adr/004-normalize-errors-before-retry-policy.md)
 
 ## Hugging Face publication
 
-- **Space:** https://huggingface.co/spaces/h0000w/autonomous-revenue-ops
-- **Dataset:** https://huggingface.co/datasets/h0000w/autonomous-revenue-ops
-- **System/model card:** https://huggingface.co/h0000w/autonomous-revenue-ops
-- **Bucket:** https://huggingface.co/buckets/h0000w/autonomous-revenue-ops
+- Space: https://huggingface.co/spaces/h0000w/autonomous-revenue-ops
+- Dataset: https://huggingface.co/datasets/h0000w/autonomous-revenue-ops
+- System/model card: https://huggingface.co/h0000w/autonomous-revenue-ops
+- Bucket: https://huggingface.co/buckets/h0000w/autonomous-revenue-ops
 
-GitHub is the source of truth. `.github/workflows/hf-sync.yml` publishes the reviewer Space, evaluation dataset and system card through the repository `HF_TOKEN` secret.
+GitHub is the source of truth. The publication workflow uses the repository `HF_TOKEN` secret.
 
 ## Current maturity boundary
 
-After Phase 1 this repository qualifies as a **runnable production-architecture proof**, not yet a production-validated service. The current idempotency store is process-local; live CRM providers, auth/signature validation, distributed recovery, persistent DLQ/replay, production SLO evidence and real deployment infrastructure are introduced in later phases.
+After Phase 2, the repository is a **runnable, contract-tested production-architecture proof**. It is not yet production validated. Remaining controls include real LLM providers and agents, workflow orchestration, durable recovery/DLQ, webhook security, deeper evaluation, operational telemetry, production deployment/SLO evidence, and live-provider capability evidence.
 
-## Business metrics for real deployments
-
-The architecture is designed to measure automation rate, manual touches per lead, mean handling time, safe escalation rate, false-automation rate, duplicate action rate, CRM/API failure rate, qualification precision/recall, cost per completed workflow and audit completeness.
-
-Synthetic demo values are never presented as customer ROI.
+Synthetic demonstration values are never presented as customer ROI.
 
 ## Author
 
