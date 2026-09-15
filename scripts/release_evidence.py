@@ -21,6 +21,10 @@ TRACKED_INPUTS = (
     "evals/release_thresholds.json",
     "data/agent_eval_cases.jsonl",
     "deploy/k8s",
+    "scripts/release_evidence.py",
+    "scripts/verify_release_evidence.py",
+    "scripts/release_version_check.py",
+    "Makefile",
     ".github/workflows/ci.yml",
     ".github/workflows/release.yml",
 )

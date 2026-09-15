@@ -14,6 +14,8 @@ jobs:
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
       - uses: actions/setup-python@v5
         with:
           python-version: '3.12'
@@ -22,6 +24,12 @@ jobs:
         run: |
           python -m pip install --upgrade pip
           python -m pip install -r requirements.txt
+      - name: Validate tag version and main ancestry
+        run: |
+          set -euo pipefail
+          git fetch origin main:refs/remotes/origin/main
+          git merge-base --is-ancestor "$GITHUB_SHA" refs/remotes/origin/main
+          python scripts/release_version_check.py --tag "$GITHUB_REF_NAME"
       - name: Run release verification gates
         run: make verify
       - name: Generate pre-build release evidence
