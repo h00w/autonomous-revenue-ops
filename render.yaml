@@ -45,11 +45,19 @@ services:
         value: https://autonomous-revenue-ops-n8n.onrender.com/
       - key: N8N_PROXY_HOPS
         value: "1"
+      # The public proof workflow uses Webhook -> HTTP Request -> Respond and
+      # has no Code/Python nodes. External runner mode prevents the constrained
+      # 512 MB demo instance from launching internal runners. A separate
+      # n8nio/runners sidecar is required before Code-node execution is enabled.
+      - key: N8N_RUNNERS_MODE
+        value: external
+      - key: N8N_RUNNERS_AUTH_TOKEN
+        generateValue: true
       # Render Free has 512 MB RAM. n8n 2.38.x auto-selected a ~256 MB V8 old
       # space and crashed during initial migrations. Raising old space to 384 MB
-      # kept the service within the same free instance while allowing startup.
-      # If this becomes unstable under workflow load, move to 1c-2g instead of
-      # the 0.5c-512mb Starter plan, because Starter has the same RAM as Free.
+      # gives startup more headroom. If this remains unstable under workflow
+      # load, move to 1c-2g instead of the 0.5c-512mb Starter plan, because
+      # Starter has the same RAM as Free.
       - key: NODE_OPTIONS
         value: --max-old-space-size=384
       # Explicitly pin upcoming n8n defaults and keep the public demo surface
