@@ -4,7 +4,7 @@ metadata:
   name: autonomous-revenue-ops-config
 data:
   ARO_ENVIRONMENT: "production"
-  ARO_SERVICE_VERSION: "0.9.0"
+  ARO_SERVICE_VERSION: "0.10.0"
   ARO_DEPLOYMENT_REPLICA_COUNT: "1"
   ARO_WORKFLOW_STORE_BACKEND: "sqlite"
   ARO_WORKFLOW_DB_PATH: "/app/data/workflows.sqlite3"
