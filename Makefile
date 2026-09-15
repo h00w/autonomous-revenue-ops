@@ -1,4 +1,4 @@
-.PHONY: install test benchmark api demo verify smoke-hubspot smoke-salesforce smoke-slack smoke-smtp
+.PHONY: install test benchmark api demo verify smoke-hubspot smoke-salesforce smoke-slack smoke-smtp smoke-openai smoke-anthropic smoke-gemini smoke-workflow
 
 install:
 	python -m pip install --upgrade pip
@@ -28,6 +28,18 @@ smoke-slack:
 smoke-smtp:
 	python scripts/integration_smoke.py smtp
 
+smoke-openai:
+	python scripts/ai_provider_smoke.py openai
+
+smoke-anthropic:
+	python scripts/ai_provider_smoke.py anthropic
+
+smoke-gemini:
+	python scripts/ai_provider_smoke.py gemini
+
+smoke-workflow:
+	python scripts/workflow_smoke.py
+
 verify:
 	python -m compileall -q src scripts
 	python -m pytest -q
@@ -36,3 +48,7 @@ verify:
 	python scripts/integration_smoke.py salesforce
 	python scripts/integration_smoke.py slack
 	python scripts/integration_smoke.py smtp
+	python scripts/ai_provider_smoke.py openai
+	python scripts/ai_provider_smoke.py anthropic
+	python scripts/ai_provider_smoke.py gemini
+	python scripts/workflow_smoke.py

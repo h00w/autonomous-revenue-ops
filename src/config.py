@@ -13,7 +13,7 @@ class Settings(BaseSettings):
     """
 
     app_name: str = "Autonomous Revenue Ops"
-    service_version: str = "0.3.0"
+    service_version: str = "0.4.0"
     environment: Literal["development", "test", "staging", "production"] = "development"
     api_prefix: str = "/v1"
     log_level: str = "INFO"
@@ -53,6 +53,9 @@ class Settings(BaseSettings):
     gemini_api_key: Optional[SecretStr] = None
     gemini_base_url: str = "https://generativelanguage.googleapis.com"
     gemini_model: str = "gemini-3.8-flash"
+
+    # Phase 4 orchestration. Durable backends are introduced in later phases.
+    workflow_store_backend: Literal["memory"] = "memory"
 
     model_config = SettingsConfigDict(
         env_file=".env",

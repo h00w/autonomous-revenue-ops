@@ -38,3 +38,5 @@ jobs:
           python scripts/ai_provider_smoke.py openai
           python scripts/ai_provider_smoke.py anthropic
           python scripts/ai_provider_smoke.py gemini
+      - name: Verify workflow smoke harness is side-effect free by default
+        run: python scripts/workflow_smoke.py

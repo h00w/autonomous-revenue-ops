@@ -8,6 +8,7 @@ from fastapi import FastAPI, Header, Request, Response
 from .config import get_settings
 from .logging_config import configure_logging
 from .models import HealthResponse, LeadEvaluationRequest, WorkflowResponse
+from .orchestration.api import router as workflow_router
 from .service import RevenueOpsService
 
 settings = get_settings()
@@ -79,6 +80,7 @@ def create_app() -> FastAPI:
             idempotency_key=idempotency_key,
         )
 
+    app.include_router(workflow_router)
     return app
 
 

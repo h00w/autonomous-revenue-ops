@@ -1,0 +1,72 @@
+{
+  "name": "Autonomous Revenue Ops - Lead Intake",
+  "nodes": [
+    {
+      "parameters": {
+        "httpMethod": "POST",
+        "path": "autonomous-revenue-ops/lead",
+        "responseMode": "responseNode"
+      },
+      "id": "lead-webhook",
+      "name": "Lead Webhook",
+      "type": "n8n-nodes-base.webhook",
+      "typeVersion": 2,
+      "position": [0, 0]
+    },
+    {
+      "parameters": {
+        "method": "POST",
+        "url": "={{ $env.ARO_API_BASE_URL + '/v1/workflows/leads' }}",
+        "sendHeaders": true,
+        "headerParameters": {
+          "parameters": [
+            {
+              "name": "Idempotency-Key",
+              "value": "={{ $json.idempotency_key || $execution.id }}"
+            },
+            {
+              "name": "X-Correlation-ID",
+              "value": "={{ $json.correlation_id || $execution.id }}"
+            }
+          ]
+        },
+        "sendBody": true,
+        "contentType": "raw",
+        "rawContentType": "application/json",
+        "body": "={{ JSON.stringify({ lead: $json.lead, enrichment_context: $json.enrichment_context || {} }) }}"
+      },
+      "id": "start-workflow",
+      "name": "Start Governed Workflow",
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.2,
+      "position": [260, 0]
+    },
+    {
+      "parameters": {
+        "respondWith": "json",
+        "responseBody": "={{ $json }}"
+      },
+      "id": "respond",
+      "name": "Respond to Webhook",
+      "type": "n8n-nodes-base.respondToWebhook",
+      "typeVersion": 1.4,
+      "position": [520, 0]
+    }
+  ],
+  "connections": {
+    "Lead Webhook": {
+      "main": [[{"node": "Start Governed Workflow", "type": "main", "index": 0}]]
+    },
+    "Start Governed Workflow": {
+      "main": [[{"node": "Respond to Webhook", "type": "main", "index": 0}]]
+    }
+  },
+  "settings": {
+    "executionOrder": "v1"
+  },
+  "active": false,
+  "pinData": {},
+  "meta": {
+    "templateCredsSetupCompleted": false
+  }
+}
