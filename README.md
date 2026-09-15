@@ -7,7 +7,7 @@
 [![Dataset](https://img.shields.io/badge/Hugging%20Face-Dataset-FFD21E?logo=huggingface&logoColor=000)](https://huggingface.co/datasets/h0000w/autonomous-revenue-ops)
 [![System Card](https://img.shields.io/badge/Hugging%20Face-System%20Card-FFD21E?logo=huggingface&logoColor=000)](https://huggingface.co/h0000w/autonomous-revenue-ops)
 
-**Proof chain:** GitHub source → typed production API → multi-model structured reasoning → deterministic policy → bounded SaaS adapters → regression/evaluation gates → reviewer Space → Hugging Face publication.
+**Proof chain:** GitHub source → typed production API → multi-model structured reasoning → deterministic policy → explicit workflow state → bounded SaaS execution → regression/evaluation gates → reviewer Space → Hugging Face publication.
 
 ## Project phase
 
@@ -17,10 +17,11 @@
 | Phase 1 — Core production architecture | ✅ Complete | FastAPI, service layer, config, events, correlation, idempotency, structured logs, health checks |
 | Phase 2 — Real SaaS & CRM integrations | ✅ Contract-complete · 🔬 live validation pending | HubSpot, Salesforce, Slack, SMTP, webhook adapters; 41/41 tests at merge; benchmark 6/6 |
 | Phase 3 — Multi-model AI & agent layer | ✅ Contract-complete · 🔬 live validation pending | OpenAI, Anthropic, Gemini REST adapters; governed Research/Qualification/Outreach agents; 55/55 tests; benchmark 6/6 |
-| Phase 4 — Workflow orchestration | ⏭ Next | workflow run state, n8n-compatible contracts, approvals, orchestration evidence |
-| Phases 5–10 | Planned | reliability/security → evals → analytics → deployment → public proof → production validation |
+| Phase 4 — Workflow orchestration | ✅ Contract-complete · 💾 durable persistence pending | workflow state machine, idempotent runs, approvals/research resume, n8n REST/template contracts; 65/65 tests; benchmark 6/6 |
+| Phase 5 — Reliability, recovery & security | ⏭ Next | durable/recoverable execution semantics, retry/circuit breaker/DLQ, webhook/auth controls |
+| Phases 6–10 | Planned | evals → analytics → deployment → public proof → production validation |
 
-The evidence boundary is explicit: Phase 2 SaaS adapters and Phase 3 AI-provider adapters are implemented and contract-tested. Live-account/model capability validation requires dedicated sandbox/test credentials and remains required before a final **Production Validated** claim.
+The evidence boundary is explicit: Phase 2 SaaS adapters, Phase 3 AI-provider adapters, and Phase 4 orchestration semantics are implemented and contract-tested. Live SaaS/model capability validation and durable restart-safe workflow persistence remain required before a final **Production Validated** claim.
 
 ## System flow
 
@@ -29,28 +30,28 @@ Inbound lead / SaaS webhook / n8n
   → FastAPI boundary
   → typed validation + normalization
   → correlation + idempotency
+  → workflow run: RECEIVED → RUNNING
   → multi-model reasoning layer
       ├─ Research Agent
       ├─ Qualification Agent
       └─ controlled provider fallback
   → deterministic policy gate
-      ├─ AUTO_ROUTE
-      ├─ HUMAN_REVIEW
-      ├─ RESEARCH_MORE
-      ├─ NURTURE
-      └─ BLOCK
+      ├─ AUTO_ROUTE / NURTURE → READY_FOR_EXECUTION
+      ├─ HUMAN_REVIEW → WAITING_HUMAN_REVIEW → approve/reject
+      ├─ RESEARCH_MORE → WAITING_RESEARCH → resume with evidence
+      └─ BLOCK → COMPLETED without execution
   → Outreach Drafting Agent only when policy authorizes
-  → bounded integration layer
+  → bounded integration executor (for example n8n)
       ├─ HubSpot CRM
       ├─ Salesforce CRM
       ├─ Slack
       ├─ SMTP email
       └─ HTTPS webhook
-  → normalized result / error
-  → verification / audit / metrics
+  → explicit execution receipt
+  → COMPLETED / FAILED
 ```
 
-**AI may propose. Software validates. Policy authorizes. Bounded adapters execute. Verification determines completion.**
+**AI may propose. Software validates. Policy authorizes. Workflow state gates execution. Bounded adapters execute. Explicit evidence determines completion.**
 
 ## Production controls implemented so far
 
@@ -76,10 +77,15 @@ Inbound lead / SaaS webhook / n8n
 | Versioned prompts | `src/ai/prompts.py` |
 | Research / Qualification / Outreach agents | `src/ai/agents.py` |
 | Deterministic-policy supervisor | `src/ai/supervisor.py` |
-| Regression tests | `tests/` — 55 passing at Phase 3 merge |
+| Workflow state machine | `src/orchestration/engine.py`, `src/orchestration/models.py` |
+| Workflow run-store abstraction | `src/orchestration/store.py` |
+| Workflow REST API | `src/orchestration/api.py` |
+| n8n reference workflow | `n8n/lead-intake.workflow.json` |
+| Regression tests | `tests/` — 65 passing at Phase 4 merge |
 | Policy benchmark | `evals/benchmark.py` — 6/6 |
 | SaaS live-validation harness | `scripts/integration_smoke.py` |
 | AI-provider validation harness | `scripts/ai_provider_smoke.py` |
+| Workflow smoke harness | `scripts/workflow_smoke.py` |
 | CI | `.github/workflows/ci.yml` |
 | HF publication | `.github/workflows/hf-sync.yml` |
 
@@ -106,12 +112,17 @@ cp .env.example .env
 uvicorn src.api:app --reload --host 0.0.0.0 --port 8000
 ```
 
-Endpoints:
+Endpoints include:
 
 - OpenAPI: `http://localhost:8000/docs`
 - Liveness: `GET /health/live`
 - Readiness: `GET /health/ready`
-- Governed lead evaluation: `POST /v1/leads/evaluate`
+- Governed direct evaluation: `POST /v1/leads/evaluate`
+- Start/replay workflow: `POST /v1/workflows/leads`
+- Inspect workflow: `GET /v1/workflows/runs/{run_id}`
+- Human review: `POST /v1/workflows/runs/{run_id}/approval`
+- Resume research: `POST /v1/workflows/runs/{run_id}/resume-research`
+- Record execution: `POST /v1/workflows/runs/{run_id}/complete`
 
 ## Verify the repository
 
@@ -119,27 +130,19 @@ Endpoints:
 make verify
 ```
 
-CI compiles source/scripts, runs the full test suite and policy benchmark, and verifies that SaaS and AI-provider smoke commands remain side-effect free by default.
+CI compiles source/scripts, runs the full test suite and policy benchmark, and verifies that SaaS, AI-provider, and workflow smoke commands remain side-effect free by default.
 
 ## Live capability validation
 
 Nothing external is contacted unless `--execute` is explicitly supplied.
 
-SaaS example:
-
 ```bash
 python scripts/integration_smoke.py hubspot
-python scripts/integration_smoke.py hubspot --execute
-```
-
-AI-provider example:
-
-```bash
 python scripts/ai_provider_smoke.py openai
-python scripts/ai_provider_smoke.py openai --execute
+python scripts/workflow_smoke.py
 ```
 
-Equivalent targets exist for the other configured SaaS and AI providers. Use dedicated sandbox/test credentials only.
+Use `--execute` only with dedicated sandbox/test credentials and destinations.
 
 ## Documentation
 
@@ -161,6 +164,11 @@ Equivalent targets exist for the other configured SaaS and AI providers. Use ded
 - [Model routing](docs/model-routing.md)
 - [Phase 3 completion gates](docs/phase-3-completion.md)
 
+### Workflow orchestration
+- [Workflow state and execution contract](docs/workflow-orchestration.md)
+- [n8n orchestration contract](docs/n8n-orchestration.md)
+- [Phase 4 completion gates](docs/phase-4-completion.md)
+
 ### ADRs
 - [ADR-001: API vs reviewer UI](docs/adr/001-separate-api-from-reviewer-ui.md)
 - [ADR-002: Phase 1 idempotency](docs/adr/002-idempotency-phase-1.md)
@@ -168,6 +176,7 @@ Equivalent targets exist for the other configured SaaS and AI providers. Use ded
 - [ADR-004: Normalize errors before retries](docs/adr/004-normalize-errors-before-retry-policy.md)
 - [ADR-005: AI recommends; deterministic policy authorizes](docs/adr/005-ai-recommends-policy-authorizes.md)
 - [ADR-006: Controlled multi-model fallback](docs/adr/006-controlled-model-fallback.md)
+- [ADR-007: Workflow state outside agents](docs/adr/007-orchestration-state-outside-agents.md)
 
 ## Hugging Face publication
 
@@ -180,7 +189,7 @@ GitHub is the source of truth. The publication workflow uses the repository `HF_
 
 ## Current maturity boundary
 
-After Phase 3, the repository is a **runnable, contract-tested multi-model production-architecture proof**. It is not yet production validated. Remaining controls include durable workflow orchestration/recovery, webhook security, retry/circuit-breaking and DLQ behavior, deeper model evaluation, operational telemetry, production deployment/SLO evidence, and live-provider capability evidence.
+After Phase 4, the repository is a **runnable, contract-tested multi-model and workflow-orchestration proof**. It is not yet production validated. The workflow store is process-local, and inbound workflow endpoints do not yet claim production authentication/signature controls. Phase 5 must add recovery, retry/circuit-breaking, dead-letter handling and security hardening; later phases add deeper evals, telemetry, deployment/SLO evidence and live-provider capability evidence.
 
 Synthetic demonstration values are never presented as customer ROI.
 
