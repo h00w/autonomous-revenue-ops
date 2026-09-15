@@ -1,4 +1,4 @@
-.PHONY: install test benchmark agent-eval live-eval-dry analytics-report api demo verify deployment-check slo-dry smoke-hubspot smoke-salesforce smoke-slack smoke-smtp smoke-ai smoke-workflow smoke-reliability smoke-analytics
+.PHONY: install test benchmark agent-eval live-eval-dry analytics-report api demo verify deployment-check slo-dry release-evidence release-verify smoke-hubspot smoke-salesforce smoke-slack smoke-smtp smoke-ai smoke-workflow smoke-reliability smoke-analytics
 
 install:
 	python -m pip install --upgrade pip
@@ -26,6 +26,12 @@ deployment-check:
 
 slo-dry:
 	python scripts/slo_probe.py
+
+release-evidence:
+	python scripts/release_evidence.py --output release-evidence
+
+release-verify:
+	python scripts/verify_release_evidence.py release-evidence
 
 api:
 	uvicorn src.api:app --reload --host 0.0.0.0 --port 8000
@@ -72,3 +78,5 @@ verify:
 	python scripts/analytics_smoke.py
 	python scripts/deployment_contract.py
 	python scripts/slo_probe.py
+	python scripts/release_evidence.py --output release-evidence
+	python scripts/verify_release_evidence.py release-evidence

@@ -1,0 +1,75 @@
+name: Release
+
+on:
+  push:
+    tags:
+      - 'v*'
+
+permissions:
+  contents: write
+  packages: write
+
+jobs:
+  release:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: '3.12'
+          cache: pip
+      - name: Install verification dependencies
+        run: |
+          python -m pip install --upgrade pip
+          python -m pip install -r requirements.txt
+      - name: Run release verification gates
+        run: make verify
+      - name: Generate pre-build release evidence
+        env:
+          ARO_SOURCE_COMMIT: ${{ github.sha }}
+        run: |
+          python scripts/release_evidence.py --output release-evidence
+          python scripts/verify_release_evidence.py release-evidence
+      - name: Build and publish GHCR image
+        id: image
+        env:
+          GHCR_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        run: |
+          set -euo pipefail
+          IMAGE="ghcr.io/${GITHUB_REPOSITORY,,}"
+          TAG="$GITHUB_REF_NAME"
+          SHA_TAG="sha-${GITHUB_SHA::12}"
+          echo "$GHCR_TOKEN" | docker login ghcr.io -u "$GITHUB_ACTOR" --password-stdin
+          docker build -t "$IMAGE:$TAG" -t "$IMAGE:$SHA_TAG" .
+          docker push "$IMAGE:$TAG"
+          docker push "$IMAGE:$SHA_TAG"
+          docker pull "$IMAGE:$TAG" >/dev/null
+          DIGEST_REF="$(docker inspect --format='{{index .RepoDigests 0}}' "$IMAGE:$TAG")"
+          test -n "$DIGEST_REF"
+          echo "digest_ref=$DIGEST_REF" >> "$GITHUB_OUTPUT"
+      - name: Regenerate evidence with published image digest
+        env:
+          ARO_SOURCE_COMMIT: ${{ github.sha }}
+          IMAGE_DIGEST: ${{ steps.image.outputs.digest_ref }}
+        run: |
+          python scripts/release_evidence.py --output release-evidence --image-digest "$IMAGE_DIGEST"
+          python scripts/verify_release_evidence.py release-evidence
+          tar -czf "autonomous-revenue-ops-${GITHUB_REF_NAME}-evidence.tar.gz" release-evidence
+      - name: Upload release evidence artifact
+        uses: actions/upload-artifact@v4
+        with:
+          name: release-evidence-${{ github.ref_name }}
+          path: |
+            release-evidence/
+            autonomous-revenue-ops-${{ github.ref_name }}-evidence.tar.gz
+          if-no-files-found: error
+      - name: Create or update GitHub Release evidence asset
+        env:
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        run: |
+          BUNDLE="autonomous-revenue-ops-${GITHUB_REF_NAME}-evidence.tar.gz"
+          if gh release view "$GITHUB_REF_NAME" >/dev/null 2>&1; then
+            gh release upload "$GITHUB_REF_NAME" "$BUNDLE" --clobber
+          else
+            gh release create "$GITHUB_REF_NAME" "$BUNDLE" --title "$GITHUB_REF_NAME" --generate-notes
+          fi

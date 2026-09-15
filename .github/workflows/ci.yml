@@ -62,6 +62,19 @@ jobs:
         run: python scripts/deployment_contract.py
       - name: Verify SLO probe is opt-in by default
         run: python scripts/slo_probe.py
+      - name: Generate and verify release integrity evidence
+        env:
+          ARO_SOURCE_COMMIT: ${{ github.event.pull_request.head.sha || github.sha }}
+        run: |
+          python scripts/release_evidence.py --output release-evidence
+          python scripts/verify_release_evidence.py release-evidence
+      - name: Upload release integrity evidence
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: release-integrity-evidence
+          path: release-evidence/
+          if-no-files-found: error
       - name: Build and boot hardened API container
         run: |
           set -euo pipefail
@@ -81,7 +94,7 @@ jobs:
             --mount source=aro-ci-data,target=/app/data \
             -p 18000:8000 \
             -e ARO_ENVIRONMENT=test \
-            -e ARO_SERVICE_VERSION=0.8.0 \
+            -e ARO_SERVICE_VERSION=0.9.0 \
             -e ARO_DEPLOYMENT_REPLICA_COUNT=1 \
             autonomous-revenue-ops:ci >/dev/null
           test "$(docker inspect --format '{{.Config.User}}' aro-ci)" = "10001:10001"

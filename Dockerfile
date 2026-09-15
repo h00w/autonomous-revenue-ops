@@ -1,13 +1,13 @@
-FROM python:3.12-slim-bookworm AS builder
+FROM python:3.12-slim-bookworm@sha256:782412e85d0f0984994c290652577d4018aff08145c85b262bb63dc0c7522254 AS builder
 
 ENV PIP_DISABLE_PIP_VERSION_CHECK=1 \
     PIP_NO_CACHE_DIR=1
 
 WORKDIR /build
-COPY requirements-api.txt .
-RUN python -m pip wheel --wheel-dir /wheels -r requirements-api.txt
+COPY requirements-api.lock .
+RUN python -m pip wheel --wheel-dir /wheels -r requirements-api.lock
 
-FROM python:3.12-slim-bookworm AS runtime
+FROM python:3.12-slim-bookworm@sha256:782412e85d0f0984994c290652577d4018aff08145c85b262bb63dc0c7522254 AS runtime
 
 ENV PYTHONDONTWRITEBYTECODE=1 \
     PYTHONUNBUFFERED=1 \
@@ -22,8 +22,8 @@ RUN groupadd --gid 10001 aro \
 
 WORKDIR /app
 COPY --from=builder /wheels /wheels
-COPY requirements-api.txt .
-RUN python -m pip install --no-index --find-links=/wheels -r requirements-api.txt \
+COPY requirements-api.lock .
+RUN python -m pip install --no-index --find-links=/wheels -r requirements-api.lock \
     && rm -rf /wheels
 
 COPY src ./src
