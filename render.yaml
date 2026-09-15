@@ -1,0 +1,53 @@
+# Render Blueprint for the public n8n orchestration proof surface.
+#
+# This follows Render's official n8n + Postgres template, but pins n8n to a
+# tested stable release instead of using the moving `latest` tag. n8n is only
+# an orchestration/client layer; Autonomous Revenue Ops policy and workflow
+# authorization remain in the FastAPI service.
+
+services:
+  - type: web
+    name: autonomous-revenue-ops-n8n
+    runtime: image
+    plan: free
+    region: frankfurt
+    image:
+      url: docker.io/n8nio/n8n:2.38.7
+    envVars:
+      - key: N8N_ENCRYPTION_KEY
+        generateValue: true
+      - key: DB_TYPE
+        value: postgresdb
+      - key: DB_POSTGRESDB_DATABASE
+        fromDatabase:
+          name: autonomous-revenue-ops-n8n-db
+          property: database
+      - key: DB_POSTGRESDB_HOST
+        fromDatabase:
+          name: autonomous-revenue-ops-n8n-db
+          property: host
+      - key: DB_POSTGRESDB_PASSWORD
+        fromDatabase:
+          name: autonomous-revenue-ops-n8n-db
+          property: password
+      - key: DB_POSTGRESDB_USER
+        fromDatabase:
+          name: autonomous-revenue-ops-n8n-db
+          property: user
+      - key: N8N_HOST
+        value: autonomous-revenue-ops-n8n.onrender.com
+      - key: N8N_PROTOCOL
+        value: https
+      - key: WEBHOOK_URL
+        value: https://autonomous-revenue-ops-n8n.onrender.com/
+      - key: N8N_EDITOR_BASE_URL
+        value: https://autonomous-revenue-ops-n8n.onrender.com/
+      - key: GENERIC_TIMEZONE
+        value: Europe/Stockholm
+      - key: TZ
+        value: Europe/Stockholm
+
+databases:
+  - name: autonomous-revenue-ops-n8n-db
+    plan: free
+    region: frankfurt
