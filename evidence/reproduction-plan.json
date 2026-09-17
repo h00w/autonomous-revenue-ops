@@ -1,0 +1,26 @@
+{
+  "project": {
+    "name": "Autonomous Revenue Ops",
+    "repository_name": "h00w/autonomous-revenue-ops",
+    "repository_url": "https://github.com/h00w/autonomous-revenue-ops",
+    "subject_type": "workflow-system",
+    "version": "0.10.0"
+  },
+  "inputs": [
+    {"path": "src", "kind": "workflow-and-policy-implementation"},
+    {"path": "evals", "kind": "evaluation-and-release-gates"},
+    {"path": "data", "kind": "controlled-fixtures"},
+    {"path": "deploy", "kind": "deployment-contract"},
+    {"path": "requirements.txt", "kind": "dependency-manifest"}
+  ],
+  "steps": [
+    {"name": "full-offline-verification-chain", "command": ["make", "verify"], "cwd": "."}
+  ],
+  "domain_decision": null,
+  "domain_decision_source": "deterministic policy and release-evidence workflows",
+  "notes": [
+    "The reproduction path intentionally uses deterministic fixtures and zero-call provider/SaaS harnesses.",
+    "Live provider and SaaS validation remains a separate explicit retained-evidence workflow.",
+    "A reproduced verification chain is not equivalent to Production Validated status."
+  ]
+}
