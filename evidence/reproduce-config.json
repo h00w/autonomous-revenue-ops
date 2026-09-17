@@ -1,0 +1,16 @@
+{
+  "name": "Autonomous Revenue Ops",
+  "subject_type": "workflow_system",
+  "repository": "https://github.com/h00w/autonomous-revenue-ops",
+  "version": "0.10.0",
+  "verification_command": "make verify",
+  "dependency_patterns": ["requirements*.txt", "pyproject.toml", "Dockerfile"],
+  "input_patterns": ["src/**/*.py", "n8n/**/*.json", "postman/**/*.json", "observability/**/*.json"],
+  "benchmark_name": "Autonomous Revenue Ops regression and policy evidence",
+  "benchmark_version": "1",
+  "benchmark_patterns": ["evals/**/*.json", "evals/**/*.jsonl", "evals/**/*.py"],
+  "policy_name": "Deterministic revenue-operations authorization policy",
+  "policy_version": "1",
+  "policy_patterns": ["src/policy.py", "src/**/*.py", "docs/**/*policy*.md", "docs/**/*security*.md"],
+  "approvals_required": true
+}
