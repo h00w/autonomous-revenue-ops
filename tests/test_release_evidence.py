@@ -5,6 +5,19 @@ from scripts.release_evidence import ROOT, base_image, build_release_evidence, p
 from scripts.verify_release_evidence import verify_release_evidence
 
 
+def _exact_requirement(path: Path, package: str) -> str:
+    prefix = f"{package}=="
+    for raw in path.read_text(encoding="utf-8").splitlines():
+        line = raw.strip()
+        if line.startswith(prefix):
+            return line[len(prefix) :]
+    raise AssertionError(f"missing exact requirement for {package} in {path.name}")
+
+
+def _version_tuple(version: str) -> tuple[int, ...]:
+    return tuple(int(part) for part in version.split("."))
+
+
 def test_runtime_lock_is_exact_and_nonempty():
     packages = parse_runtime_lock(ROOT)
     assert len(packages) >= 20
@@ -12,6 +25,13 @@ def test_runtime_lock_is_exact_and_nonempty():
     assert ">=" not in raw
     assert "~=" not in raw
     assert all(name and version for name, version in packages)
+
+
+def test_runtime_pydantic_pin_is_compatible_with_fastapi_and_gradio():
+    version = _exact_requirement(ROOT / "requirements-api.txt", "pydantic")
+    assert _exact_requirement(ROOT / "requirements-api.lock", "pydantic") == version
+    assert _version_tuple(version) >= (2, 9, 0)
+    assert _version_tuple(version) < (2, 12, 0)
 
 
 def test_base_image_is_digest_pinned():
