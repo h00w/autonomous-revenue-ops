@@ -6,7 +6,6 @@ on:
     branches: [main]
     paths:
       - 'app.py'
-      - 'requirements.txt'
       - 'requirements-api.txt'
       - 'src/**'
       - 'data/**'
@@ -28,7 +27,8 @@ jobs:
       - name: Prepare publication folders
         run: |
           mkdir -p .publish/space .publish/model .publish/dataset
-          cp app.py requirements.txt requirements-api.txt .publish/space/
+          cp app.py requirements-api.txt .publish/space/
+          cp hf/space/requirements.txt .publish/space/requirements.txt
           cp -R src .publish/space/src
           cp hf/space/README.md .publish/space/README.md
           cp hf/model/README.md .publish/model/README.md
@@ -43,6 +43,7 @@ jobs:
           test -f .publish/space/src/models.py
           test -f .publish/space/src/policy.py
           grep -q 'requirements-api.txt' .publish/space/requirements.txt
+          ! grep -q '^gradio' .publish/space/requirements.txt
           python -m compileall .publish/space/app.py .publish/space/src
       - name: Validate Hugging Face token
         env:
