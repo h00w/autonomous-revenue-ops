@@ -202,7 +202,7 @@ jobs:
 
       - name: Upload retained live-validation evidence
         if: ${{ always() && steps.validation.outputs.evidence_dir != '' && hashFiles(format('{0}/*', steps.validation.outputs.evidence_dir)) != '' }}
-        uses: actions/upload-artifact@v4
+        uses: actions/upload-artifact@v7
         with:
           name: live-validation-${{ inputs.operation }}-${{ github.run_id }}
           path: ${{ steps.validation.outputs.evidence_dir }}/
