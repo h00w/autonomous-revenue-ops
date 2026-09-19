@@ -1,4 +1,4 @@
 -r requirements-api.txt
-gradio==6.27.0
+gradio==5.49.1
 pytest==9.1.1
 PyYAML==6.0.3
