@@ -8,6 +8,7 @@ on:
       - 'app.py'
       - 'requirements.txt'
       - 'requirements-api.txt'
+      - 'src/**'
       - 'data/**'
       - 'hf/**'
       - '.github/workflows/hf-sync.yml'
@@ -28,15 +29,21 @@ jobs:
         run: |
           mkdir -p .publish/space .publish/model .publish/dataset
           cp app.py requirements.txt requirements-api.txt .publish/space/
+          cp -R src .publish/space/src
           cp hf/space/README.md .publish/space/README.md
           cp hf/model/README.md .publish/model/README.md
           cp hf/dataset/README.md .publish/dataset/README.md
           cp data/lead_qualification_eval.jsonl .publish/dataset/
-      - name: Validate Space dependency closure
+      - name: Validate Space runtime bundle
         run: |
+          test -f .publish/space/app.py
           test -f .publish/space/requirements.txt
           test -f .publish/space/requirements-api.txt
+          test -f .publish/space/src/__init__.py
+          test -f .publish/space/src/models.py
+          test -f .publish/space/src/policy.py
           grep -q 'requirements-api.txt' .publish/space/requirements.txt
+          python -m compileall .publish/space/app.py .publish/space/src
       - name: Validate Hugging Face token
         env:
           HF_TOKEN: ${{ secrets.HF_TOKEN }}
