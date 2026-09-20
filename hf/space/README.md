@@ -21,3 +21,14 @@ Source: https://github.com/h00w/autonomous-revenue-ops
 Dataset: https://huggingface.co/datasets/h0000w/autonomous-revenue-ops
 
 System card: https://huggingface.co/h0000w/autonomous-revenue-ops
+
+
+## Five-level production-AI proof
+
+This project now reports proof using:
+
+`L1 Runnable → L2 Reproducible → L3 Capability-Validated → L4 Production-Candidate → L5 Production-Validated`.
+
+The GitHub repository computes the level with `make proof`. The public Hugging Face Space, Dataset and system card support the inspectable capability layer, while the project intentionally caps its public claim at **L3 — Capability-Validated** until live CRM operations and target-environment recovery evidence exist.
+
+Specification: https://github.com/h00w/autonomous-revenue-ops/blob/main/PROOF_MODEL.md

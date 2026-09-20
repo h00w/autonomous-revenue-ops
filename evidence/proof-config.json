@@ -1,0 +1,30 @@
+{
+  "proofModelVersion": "1.0.0",
+  "minimumLevel": 3,
+  "maxLevel": 3,
+  "externalEvidence": [
+    {
+      "kind": "huggingface_space",
+      "url": "https://huggingface.co/api/spaces/h0000w/autonomous-revenue-ops",
+      "displayUrl": "https://huggingface.co/spaces/h0000w/autonomous-revenue-ops",
+      "required": true
+    },
+    {
+      "kind": "huggingface_dataset",
+      "url": "https://huggingface.co/api/datasets/h0000w/autonomous-revenue-ops",
+      "displayUrl": "https://huggingface.co/datasets/h0000w/autonomous-revenue-ops",
+      "required": true
+    },
+    {
+      "kind": "huggingface_system_card",
+      "url": "https://huggingface.co/api/models/h0000w/autonomous-revenue-ops",
+      "displayUrl": "https://huggingface.co/h0000w/autonomous-revenue-ops",
+      "required": true
+    }
+  ],
+  "level4": {},
+  "level5": {
+    "enabled": false,
+    "reason": "The current public proof uses synthetic inputs and simulated external side effects; live CRM production outcomes and target-environment recovery evidence are not asserted."
+  }
+}
