@@ -62,7 +62,7 @@ jobs:
       - name: Publish Space
         env:
           HF_TOKEN: ${{ secrets.HF_TOKEN }}
-        run: hf upload h0000w/autonomous-revenue-ops .publish/space . --repo-type space --token "$HF_TOKEN" --delete-pattern "__pycache__/**"
+        run: hf upload h0000w/autonomous-revenue-ops .publish/space . --repo-type space --token "$HF_TOKEN" --delete "__pycache__/**"
       - name: Publish dataset
         env:
           HF_TOKEN: ${{ secrets.HF_TOKEN }}
