@@ -1,1 +1,10 @@
--r requirements-api.txt
+# Self-contained Hugging Face Space runtime dependencies.
+# Keep these pins aligned with requirements-api.txt. Hugging Face mounts
+# requirements.txt at /tmp during the build, so nested "-r requirements-api.txt"
+# includes are intentionally avoided here.
+fastapi==0.141.1
+uvicorn[standard]==0.53.0
+pydantic==2.11.7
+pydantic-settings==2.15.0
+email-validator==2.3.0
+httpx==0.28.1

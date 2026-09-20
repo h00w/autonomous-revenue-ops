@@ -42,9 +42,17 @@ jobs:
           test -f .publish/space/src/__init__.py
           test -f .publish/space/src/models.py
           test -f .publish/space/src/policy.py
-          grep -q 'requirements-api.txt' .publish/space/requirements.txt
+          ! grep -q '^-r ' .publish/space/requirements.txt
           ! grep -q '^gradio' .publish/space/requirements.txt
-          python -m compileall .publish/space/app.py .publish/space/src
+          diff -u <(grep -Ev '^[[:space:]]*(#|$)' requirements-api.txt) <(grep -Ev '^[[:space:]]*(#|$)' .publish/space/requirements.txt)
+          python - <<'PY'
+          from pathlib import Path
+          paths = [Path(".publish/space/app.py"), *Path(".publish/space/src").rglob("*.py")]
+          for path in paths:
+              compile(path.read_text(encoding="utf-8"), str(path), "exec")
+          PY
+          find .publish/space -type d -name __pycache__ -prune -exec rm -rf {} +
+          ! find .publish/space -type f -name '*.pyc' -print -quit | grep -q .
       - name: Validate Hugging Face token
         env:
           HF_TOKEN: ${{ secrets.HF_TOKEN }}
@@ -54,7 +62,7 @@ jobs:
       - name: Publish Space
         env:
           HF_TOKEN: ${{ secrets.HF_TOKEN }}
-        run: hf upload h0000w/autonomous-revenue-ops .publish/space . --repo-type space --token "$HF_TOKEN"
+        run: hf upload h0000w/autonomous-revenue-ops .publish/space . --repo-type space --token "$HF_TOKEN" --delete-pattern "__pycache__/**"
       - name: Publish dataset
         env:
           HF_TOKEN: ${{ secrets.HF_TOKEN }}
