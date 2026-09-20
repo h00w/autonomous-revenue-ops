@@ -1,4 +1,4 @@
-.PHONY: install test benchmark agent-eval live-eval-dry analytics-report api demo verify deployment-check slo-dry release-version release-evidence release-verify live-evidence-contract live-evidence-verify smoke-hubspot smoke-salesforce smoke-slack smoke-smtp smoke-ai smoke-workflow smoke-reliability smoke-analytics reproduce reproduce-clean proof proof-offline proof-clean
+.PHONY: install test benchmark agent-eval live-eval-dry analytics-report api demo verify deployment-check slo-dry release-version release-evidence release-verify live-evidence-contract live-evidence-verify smoke-hubspot smoke-salesforce smoke-slack smoke-smtp smoke-ai smoke-workflow smoke-reliability smoke-analytics reproduce reproduce-clean proof proof-offline proof-clean proof-package proof-verify
 
 install:
 	python -m pip install --upgrade pip
@@ -107,3 +107,9 @@ proof-offline: reproduce
 
 proof-clean:
 	rm -rf evidence/out
+
+proof-package: proof
+	python scripts/build_proof_bundle.py
+
+proof-verify:
+	python scripts/verify_proof_bundle.py
