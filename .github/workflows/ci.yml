@@ -31,7 +31,7 @@ jobs:
         run: python evals/agent_release_gate.py --report agent-eval-report.json
       - name: Upload agent evaluation evidence
         if: ${{ always() && hashFiles('agent-eval-report.json') != '' }}
-        uses: actions/upload-artifact@v4
+        uses: actions/upload-artifact@v7
         with:
           name: agent-eval-report
           path: agent-eval-report.json
@@ -72,7 +72,7 @@ jobs:
           python scripts/verify_live_evidence.py live-validation-contract-evidence
       - name: Upload live-evidence contract artifact
         if: ${{ always() && hashFiles('live-validation-contract-evidence/*') != '' }}
-        uses: actions/upload-artifact@v4
+        uses: actions/upload-artifact@v7
         with:
           name: live-validation-contract-evidence
           path: live-validation-contract-evidence/
@@ -87,7 +87,7 @@ jobs:
           python scripts/verify_release_evidence.py release-evidence
       - name: Upload release integrity evidence
         if: ${{ always() && hashFiles('release-evidence/*') != '' }}
-        uses: actions/upload-artifact@v4
+        uses: actions/upload-artifact@v7
         with:
           name: release-integrity-evidence
           path: release-evidence/
