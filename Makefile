@@ -1,4 +1,4 @@
-.PHONY: install test benchmark agent-eval live-eval-dry analytics-report api demo verify deployment-check slo-dry release-version release-evidence release-verify live-evidence-contract live-evidence-verify smoke-hubspot smoke-salesforce smoke-slack smoke-smtp smoke-ai smoke-workflow smoke-reliability smoke-analytics reproduce reproduce-clean proof proof-offline proof-clean proof-package proof-verify
+.PHONY: install test benchmark agent-eval live-eval-dry analytics-report api demo verify deployment-check slo-dry release-version release-evidence release-verify live-evidence-contract live-evidence-verify smoke-hubspot smoke-salesforce smoke-slack smoke-smtp smoke-ai smoke-workflow smoke-reliability smoke-analytics reproduce reproduce-clean proof proof-offline proof-clean proof-package proof-verify deployment-contract-selftest deployment-template-check deployment-evidence-check
 
 install:
 	python -m pip install --upgrade pip
@@ -113,3 +113,12 @@ proof-package: proof
 
 proof-verify:
 	python scripts/verify_proof_bundle.py
+
+deployment-contract-selftest:
+	python scripts/deployment_evidence_selftest.py
+
+deployment-template-check:
+	python scripts/validate_deployment_evidence.py evidence/deployment-evidence.example.json --minimum-observation-seconds 86400 --expect-not-qualified
+
+deployment-evidence-check:
+	python scripts/validate_deployment_evidence.py evidence/deployment-evidence.json --expected-commit "$$(git rev-parse HEAD)" --minimum-observation-seconds 86400
