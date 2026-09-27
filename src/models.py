@@ -26,7 +26,7 @@ class LeadInput(BaseModel):
 
 class Qualification(BaseModel):
     score: int = Field(ge=0, le=100)
-    confidence: float = Field(ge=0.0, le=1.0)
+    confidence: float = Field(ge=0.0, le=1.0, allow_inf_nan=False)
     icp_fit: int = Field(ge=0, le=100)
     intent: int = Field(ge=0, le=100)
     urgency: int = Field(ge=0, le=100)
