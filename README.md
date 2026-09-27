@@ -12,7 +12,6 @@
 [![n8n](https://img.shields.io/badge/n8n-Visual_Orchestration-EA4B71?style=flat-square&logo=n8n&logoColor=white)](n8n)
 [![Hugging Face](https://img.shields.io/badge/Hugging_Face-Live_System_Proof-FFD21E?style=flat-square&logo=huggingface&logoColor=000)](https://huggingface.co/spaces/h0000w/autonomous-revenue-ops)
 [![Version](https://img.shields.io/badge/runtime-v0.10.0-5B7DB1?style=flat-square)](docs/phase-10-completion.md)
-[![License](https://img.shields.io/badge/License-MIT-blue?style=flat-square)](LICENSE)
 
 [**Live Space**](https://huggingface.co/spaces/h0000w/autonomous-revenue-ops) ·
 [**Evaluation Dataset**](https://huggingface.co/datasets/h0000w/autonomous-revenue-ops) ·
