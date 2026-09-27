@@ -1,5 +1,7 @@
 from src.models import Decision, LeadInput, Qualification
 from src.policy import evaluate_policy
+from pydantic import ValidationError
+import pytest
 
 
 def lead(consent=True):
@@ -58,3 +60,9 @@ def test_low_score_enters_nurture():
     result = evaluate_policy(lead(), q(score=45, confidence=0.90))
     assert result.decision == Decision.NURTURE
     assert result.authorized_for_outreach is True
+
+
+@pytest.mark.parametrize("invalid", [float("nan"), float("inf"), float("-inf")])
+def test_nonfinite_confidence_cannot_authorize_outreach(invalid):
+    with pytest.raises(ValidationError):
+        q(score=95, confidence=invalid)
