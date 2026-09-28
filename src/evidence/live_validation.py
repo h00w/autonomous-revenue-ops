@@ -358,6 +358,19 @@ def verify_live_validation_bundle(
             errors.append("mismatch:release_service_version")
 
     if verify_materials:
+        if release.get("present"):
+            path_value = release.get("path")
+            expected = release.get("sha256")
+            if not path_value or not expected:
+                errors.append("invalid:release_manifest_material")
+            else:
+                manifest_path = Path(path_value)
+                if not manifest_path.is_absolute():
+                    manifest_path = root / manifest_path
+                if not manifest_path.is_file():
+                    errors.append("missing:release_manifest_material")
+                elif sha256_file(manifest_path) != expected:
+                    errors.append("release_manifest_hash_mismatch")
         for name, material in (evidence.get("materials") or {}).items():
             if not material:
                 continue

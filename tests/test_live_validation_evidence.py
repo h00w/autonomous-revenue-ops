@@ -207,3 +207,8 @@ def test_valid_live_bundle_binds_release_manifest(tmp_path: Path):
     output = tmp_path / "live"
     write_live_validation_bundle(evidence, output)
     assert verify_live_validation_bundle(output, root=tmp_path) == []
+
+    # A retained bundle cannot continue to validate after its bound release
+    # manifest has been replaced, even when the evidence file is untouched.
+    manifest.write_text(manifest.read_text(encoding="utf-8") + " ", encoding="utf-8")
+    assert "release_manifest_hash_mismatch" in verify_live_validation_bundle(output, root=tmp_path)
