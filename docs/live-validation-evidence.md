@@ -22,6 +22,7 @@ Every executed live bundle records:
 - SHA-256 checksum for the retained `evidence.json`.
 
 Executed live evidence is rejected when the release manifest is missing, when the manifest commit/version does not match the running source, or when the recorded external-call count is zero.
+The bundle verifier also checks the release manifest against its recorded SHA-256 when local materials are available; replacing that manifest invalidates the bundle.
 
 Dry-run evidence must declare zero external calls.
 
