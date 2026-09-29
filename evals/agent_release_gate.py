@@ -3,6 +3,7 @@ from __future__ import annotations
 import argparse
 import hashlib
 import json
+import math
 import sys
 from pathlib import Path
 from typing import Any
@@ -168,10 +169,14 @@ def apply_thresholds(report: dict[str, Any], thresholds: dict[str, Any]) -> list
     failures: list[str] = []
     metrics = report["metrics"]
     for name, minimum in thresholds.get("minimums", {}).items():
-        if metrics.get(name, 0) < minimum:
+        if name not in metrics or not isinstance(minimum, (int, float)) or not math.isfinite(minimum):
+            failures.append(f"invalid minimum threshold for {name}")
+        elif metrics[name] < minimum:
             failures.append(f"{name}={metrics.get(name)} below minimum {minimum}")
     for name, maximum in thresholds.get("maximums", {}).items():
-        if metrics.get(name, 0) > maximum:
+        if name not in metrics or not isinstance(maximum, (int, float)) or not math.isfinite(maximum):
+            failures.append(f"invalid maximum threshold for {name}")
+        elif metrics[name] > maximum:
             failures.append(f"{name}={metrics.get(name)} above maximum {maximum}")
     if thresholds.get("require_prompt_manifest_match") and not metrics["prompt_manifest_match"]:
         failures.append("prompt manifest does not match current prompt registry")
@@ -191,6 +196,11 @@ def run_release_gate(
     report["dataset_sha256"] = hashlib.sha256(dataset_path.read_bytes()).hexdigest()
     report["thresholds"] = thresholds
     report["gate_failures"] = apply_thresholds(report, thresholds)
+    case_ids = [case.get("case_id") for case in cases]
+    if not cases or any(not isinstance(case_id, str) or not case_id.strip() for case_id in case_ids):
+        report["gate_failures"].append("dataset requires non-empty case IDs")
+    if len(set(case_ids)) != len(case_ids):
+        report["gate_failures"].append("dataset contains duplicate case IDs")
     report["passed"] = not report["gate_failures"]
     if report_path is not None:
         report_path.write_text(json.dumps(report, indent=2, sort_keys=True), encoding="utf-8")
