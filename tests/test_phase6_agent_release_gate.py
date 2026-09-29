@@ -6,6 +6,7 @@ from evals.agent_release_gate import (
     DEFAULT_PROMPT_MANIFEST,
     prompt_manifest_matches,
     run_release_gate,
+    apply_thresholds,
 )
 
 
@@ -48,3 +49,18 @@ def test_prompt_manifest_detects_unreviewed_prompt_change():
     ok, failures = prompt_manifest_matches(manifest)
     assert ok is False
     assert any("sha256 changed" in failure for failure in failures)
+
+
+def test_duplicate_cases_cannot_inflate_release_evidence(tmp_path):
+    first = next(line for line in DEFAULT_DATASET.read_text().splitlines() if line.strip())
+    dataset = tmp_path / "cases.jsonl"
+    dataset.write_text(DEFAULT_DATASET.read_text() + "\n" + first + "\n")
+    report = run_release_gate(dataset_path=dataset)
+    assert not report["passed"]
+    assert "dataset contains duplicate case IDs" in report["gate_failures"]
+
+
+def test_invalid_threshold_does_not_pass_open():
+    report = {"metrics": {"decision_accuracy": 1.0, "prompt_manifest_match": True}}
+    assert apply_thresholds(report, {"minimums": {"decision_accuracy": float("nan")}})
+    assert apply_thresholds(report, {"minimums": {"unknown_metric": 0}})
