@@ -64,3 +64,6 @@ def test_invalid_threshold_does_not_pass_open():
     report = {"metrics": {"decision_accuracy": 1.0, "prompt_manifest_match": True}}
     assert apply_thresholds(report, {"minimums": {"decision_accuracy": float("nan")}})
     assert apply_thresholds(report, {"minimums": {"unknown_metric": 0}})
+    assert apply_thresholds(report, {"minimums": {"decision_accuracy": -1}})
+    assert apply_thresholds(report, {"minimums": {"decision_accuracy": 2}})
+    assert apply_thresholds(report, {"maximums": {"decision_accuracy": True}})
