@@ -168,6 +168,12 @@ def evaluate_cases(cases: list[dict[str, Any]], manifest: dict[str, Any]) -> dic
 def apply_thresholds(report: dict[str, Any], thresholds: dict[str, Any]) -> list[str]:
     failures: list[str] = []
     metrics = report["metrics"]
+    if not isinstance(thresholds, dict):
+        return ["threshold policy must be an object"]
+    if not thresholds.get("minimums") and not thresholds.get("maximums"):
+        failures.append("threshold policy requires at least one metric bound")
+    if not isinstance(thresholds.get("minimums", {}), dict) or not isinstance(thresholds.get("maximums", {}), dict):
+        return failures + ["threshold metric bounds must be objects"]
     for name, minimum in thresholds.get("minimums", {}).items():
         if (name not in metrics or isinstance(minimum, bool) or not isinstance(minimum, (int, float))
                 or not math.isfinite(minimum) or minimum < 0
