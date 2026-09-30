@@ -169,12 +169,16 @@ def apply_thresholds(report: dict[str, Any], thresholds: dict[str, Any]) -> list
     failures: list[str] = []
     metrics = report["metrics"]
     for name, minimum in thresholds.get("minimums", {}).items():
-        if name not in metrics or not isinstance(minimum, (int, float)) or not math.isfinite(minimum):
+        if (name not in metrics or isinstance(minimum, bool) or not isinstance(minimum, (int, float))
+                or not math.isfinite(minimum) or minimum < 0
+                or (name.endswith("_rate") or name == "decision_accuracy") and minimum > 1):
             failures.append(f"invalid minimum threshold for {name}")
         elif metrics[name] < minimum:
             failures.append(f"{name}={metrics.get(name)} below minimum {minimum}")
     for name, maximum in thresholds.get("maximums", {}).items():
-        if name not in metrics or not isinstance(maximum, (int, float)) or not math.isfinite(maximum):
+        if (name not in metrics or isinstance(maximum, bool) or not isinstance(maximum, (int, float))
+                or not math.isfinite(maximum) or maximum < 0
+                or (name.endswith("_rate") or name == "decision_accuracy") and maximum > 1):
             failures.append(f"invalid maximum threshold for {name}")
         elif metrics[name] > maximum:
             failures.append(f"{name}={metrics.get(name)} above maximum {maximum}")
