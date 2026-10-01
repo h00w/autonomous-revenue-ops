@@ -1,5 +1,7 @@
 import json
+import pytest
 from pathlib import Path
+
 
 from evals.agent_release_gate import (
     DEFAULT_DATASET,
@@ -70,3 +72,12 @@ def test_invalid_threshold_does_not_pass_open():
     assert apply_thresholds(report, {"minimums": {"decision_accuracy": -1}})
     assert apply_thresholds(report, {"minimums": {"decision_accuracy": 2}})
     assert apply_thresholds(report, {"maximums": {"decision_accuracy": True}})
+
+
+@pytest.mark.parametrize("value", [float("nan"), float("inf"), True, "1", -1, 2, None])
+def test_invalid_report_accuracy_cannot_pass(value):
+    assert apply_thresholds({"metrics": {"decision_accuracy": value}}, {"minimums": {"decision_accuracy": 0.9}})
+
+
+def test_nonfinite_policy_violation_count_cannot_pass():
+    assert apply_thresholds({"metrics": {"policy_violation_count": float("nan")}}, {"maximums": {"policy_violation_count": 0}})
