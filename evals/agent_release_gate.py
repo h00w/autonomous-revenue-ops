@@ -174,6 +174,14 @@ def apply_thresholds(report: dict[str, Any], thresholds: dict[str, Any]) -> list
         failures.append("threshold policy requires at least one metric bound")
     if not isinstance(thresholds.get("minimums", {}), dict) or not isinstance(thresholds.get("maximums", {}), dict):
         return failures + ["threshold metric bounds must be objects"]
+    for name in set(thresholds.get("minimums", {})) | set(thresholds.get("maximums", {})):
+        value = metrics.get(name)
+        if (isinstance(value, bool) or not isinstance(value, (int, float))
+                or not math.isfinite(value) or value < 0
+                or (name.endswith("_rate") or name == "decision_accuracy") and value > 1):
+            failures.append(f"invalid report metric for {name}")
+    if failures:
+        return failures
     for name, minimum in thresholds.get("minimums", {}).items():
         if (name not in metrics or isinstance(minimum, bool) or not isinstance(minimum, (int, float))
                 or not math.isfinite(minimum) or minimum < 0
