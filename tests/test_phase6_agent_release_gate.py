@@ -63,7 +63,7 @@ def test_duplicate_cases_cannot_inflate_release_evidence(tmp_path):
 
 
 def test_invalid_threshold_does_not_pass_open():
-    report = {"metrics": {"decision_accuracy": 1.0, "prompt_manifest_match": True}}
+    report = {"metrics": {"total_cases": 1, "decision_accuracy": 1.0, "prompt_manifest_match": True}}
     assert apply_thresholds(report, {})
     assert apply_thresholds(report, {"minimums": {}})
     assert apply_thresholds(report, {"minimums": []})
@@ -76,8 +76,23 @@ def test_invalid_threshold_does_not_pass_open():
 
 @pytest.mark.parametrize("value", [float("nan"), float("inf"), True, "1", -1, 2, None])
 def test_invalid_report_accuracy_cannot_pass(value):
-    assert apply_thresholds({"metrics": {"decision_accuracy": value}}, {"minimums": {"decision_accuracy": 0.9}})
+    assert apply_thresholds({"metrics": {"total_cases": 1, "decision_accuracy": value}}, {"minimums": {"decision_accuracy": 0.9}})
 
 
 def test_nonfinite_policy_violation_count_cannot_pass():
-    assert apply_thresholds({"metrics": {"policy_violation_count": float("nan")}}, {"maximums": {"policy_violation_count": 0}})
+    assert apply_thresholds({"metrics": {"total_cases": 1, "policy_violation_count": float("nan")}}, {"maximums": {"policy_violation_count": 0}})
+
+
+@pytest.mark.parametrize("total", [0, -1, True, 1.5, "1", None])
+def test_release_gate_rejects_unmeasured_or_malformed_sample_counts(total):
+    report = {"metrics": {"total_cases": total, "decision_accuracy": 1.0}}
+    assert apply_thresholds(report, {"minimums": {"decision_accuracy": 0.9}})
+
+
+def test_manifest_flags_cannot_disable_or_spoof_binding_checks():
+    metrics = {"total_cases": 1, "decision_accuracy": 1.0, "prompt_manifest_match": True}
+    policy = {"minimums": {"decision_accuracy": 0.9}, "require_prompt_manifest_match": True}
+    assert apply_thresholds({"metrics": metrics}, policy) == []
+    for invalid in ("false", 0, [], None):
+        assert apply_thresholds({"metrics": metrics}, dict(policy, require_prompt_manifest_match=invalid))
+        assert apply_thresholds({"metrics": dict(metrics, prompt_manifest_match=invalid)}, policy)
