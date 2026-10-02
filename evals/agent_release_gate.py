@@ -167,9 +167,19 @@ def evaluate_cases(cases: list[dict[str, Any]], manifest: dict[str, Any]) -> dic
 
 def apply_thresholds(report: dict[str, Any], thresholds: dict[str, Any]) -> list[str]:
     failures: list[str] = []
-    metrics = report["metrics"]
+    metrics = report.get("metrics") if isinstance(report, dict) else None
+    if not isinstance(metrics, dict):
+        return ["report metrics must be an object"]
+    total = metrics.get("total_cases")
+    if isinstance(total, bool) or not isinstance(total, int) or total <= 0:
+        failures.append("release evidence requires a positive integer total_cases")
     if not isinstance(thresholds, dict):
         return ["threshold policy must be an object"]
+    require_manifest = thresholds.get("require_prompt_manifest_match", False)
+    if not isinstance(require_manifest, bool):
+        failures.append("require_prompt_manifest_match must be a boolean")
+    if require_manifest and not isinstance(metrics.get("prompt_manifest_match"), bool):
+        failures.append("prompt_manifest_match evidence must be a boolean")
     if not thresholds.get("minimums") and not thresholds.get("maximums"):
         failures.append("threshold policy requires at least one metric bound")
     if not isinstance(thresholds.get("minimums", {}), dict) or not isinstance(thresholds.get("maximums", {}), dict):
