@@ -62,6 +62,17 @@ def test_duplicate_cases_cannot_inflate_release_evidence(tmp_path):
     assert "dataset contains duplicate case IDs" in report["gate_failures"]
 
 
+@pytest.mark.parametrize("invalid", ["true", "false", 1, 0, None, [], {}])
+def test_outreach_expectations_require_boolean_labels(tmp_path, invalid):
+    cases = [json.loads(line) for line in DEFAULT_DATASET.read_text().splitlines() if line.strip()]
+    cases[0]["expect_outreach"] = invalid
+    dataset = tmp_path / "cases.jsonl"
+    dataset.write_text("\n".join(json.dumps(case) for case in cases))
+    report = run_release_gate(dataset_path=dataset)
+    assert report["passed"] is False
+    assert any("expect_outreach must be a boolean" in failure for failure in report["gate_failures"])
+
+
 def test_invalid_threshold_does_not_pass_open():
     report = {"metrics": {"total_cases": 1, "decision_accuracy": 1.0, "prompt_manifest_match": True}}
     assert apply_thresholds(report, {})

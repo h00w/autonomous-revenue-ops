@@ -85,6 +85,7 @@ def _request_boundary_ok(provider: StaticStructuredProvider) -> bool:
 def evaluate_cases(cases: list[dict[str, Any]], manifest: dict[str, Any]) -> dict[str, Any]:
     prompt_manifest_match, prompt_manifest_failures = prompt_manifest_matches(manifest)
     rows: list[dict[str, Any]] = []
+    dataset_failures: list[str] = []
     structured_success = 0
     decision_correct = 0
     outreach_match = 0
@@ -99,6 +100,12 @@ def evaluate_cases(cases: list[dict[str, Any]], manifest: dict[str, Any]) -> dic
         )
         supervisor = RevenueOpsSupervisor(ModelRouter([provider]))
         row: dict[str, Any] = {"case_id": case["case_id"], "expected_decision": case["expected_decision"]}
+        if not isinstance(case.get("expect_outreach"), bool):
+            error = f"{case['case_id']}: expect_outreach must be a boolean"
+            dataset_failures.append(error)
+            row.update({"passed": False, "error": error})
+            rows.append(row)
+            continue
         try:
             result = supervisor.evaluate(
                 LeadInput.model_validate(case["lead"]),
@@ -116,7 +123,7 @@ def evaluate_cases(cases: list[dict[str, Any]], manifest: dict[str, Any]) -> dic
         decision_correct += int(decision_ok)
 
         actual_outreach = result.outreach is not None
-        expected_outreach = bool(case["expect_outreach"])
+        expected_outreach = case["expect_outreach"]
         outreach_ok = actual_outreach == expected_outreach
         outreach_match += int(outreach_ok)
 
@@ -162,6 +169,7 @@ def evaluate_cases(cases: list[dict[str, Any]], manifest: dict[str, Any]) -> dic
         "metrics": metrics,
         "prompt_manifest_failures": prompt_manifest_failures,
         "cases": rows,
+        "dataset_failures": dataset_failures,
     }
 
 
@@ -224,6 +232,7 @@ def run_release_gate(
     report["dataset_sha256"] = hashlib.sha256(dataset_path.read_bytes()).hexdigest()
     report["thresholds"] = thresholds
     report["gate_failures"] = apply_thresholds(report, thresholds)
+    report["gate_failures"].extend(report["dataset_failures"])
     case_ids = [case.get("case_id") for case in cases]
     if not cases or any(not isinstance(case_id, str) or not case_id.strip() for case_id in case_ids):
         report["gate_failures"].append("dataset requires non-empty case IDs")
