@@ -45,6 +45,24 @@ def test_signed_webhook_rejects_stale_timestamp(tmp_path):
         verifier.verify(body, "900", signature)
 
 
+def test_future_dated_signature_cannot_replay_after_initial_receipt_ttl(tmp_path):
+    now = [1000.0]
+    verifier = WebhookVerifier(
+        "secret", SQLiteReplayProtector(str(tmp_path / "replays.sqlite3")),
+        max_skew_seconds=60, clock=lambda: now[0],
+    )
+    body, timestamp = b"{}", "1060"
+    signature = verifier.sign(body, timestamp)
+    verifier.verify(body, timestamp, signature)
+    for instant in (1061.0, 1120.0):
+        now[0] = instant
+        with pytest.raises(WebhookSignatureError, match="replay"):
+            verifier.verify(body, timestamp, signature)
+    now[0] = 1120.1
+    with pytest.raises(WebhookSignatureError, match="outside"):
+        verifier.verify(body, timestamp, signature)
+
+
 def test_production_workflow_api_fails_closed_without_auth_config(monkeypatch):
     monkeypatch.setenv("ARO_ENVIRONMENT", "production")
     monkeypatch.delenv("ARO_WORKFLOW_API_KEY", raising=False)

@@ -64,7 +64,9 @@ class WebhookVerifier:
         replay_key = hashlib.sha256((timestamp + ":" + supplied).encode("utf-8")).hexdigest()
         if not self.replay_protector.check_and_record(
             replay_key,
-            now + self.max_skew_seconds,
+            # A future-dated signature stays valid after its initial receipt TTL.
+            # Retain it through the inclusive timestamp acceptance boundary.
+            ts + self.max_skew_seconds + 1,
             now=now,
         ):
             raise WebhookSignatureError("Webhook replay detected")
