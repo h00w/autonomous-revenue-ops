@@ -2,6 +2,7 @@ import hashlib
 import hmac
 import sqlite3
 import time
+from math import isfinite
 from pathlib import Path
 from typing import Callable
 
@@ -44,6 +45,8 @@ class WebhookVerifier:
     ) -> None:
         if not secret:
             raise ValueError("Webhook signing secret must not be empty")
+        if isinstance(max_skew_seconds, bool) or not isinstance(max_skew_seconds, int) or max_skew_seconds < 0:
+            raise ValueError("max_skew_seconds must be a non-negative integer")
         self.secret = secret.encode("utf-8")
         self.replay_protector = replay_protector
         self.max_skew_seconds = max_skew_seconds
@@ -55,6 +58,8 @@ class WebhookVerifier:
         except (TypeError, ValueError) as exc:
             raise WebhookSignatureError("Invalid webhook timestamp") from exc
         now = self.clock()
+        if isinstance(now, bool) or not isinstance(now, (int, float)) or not isfinite(now):
+            raise WebhookSignatureError("Invalid webhook verification clock")
         if abs(now - ts) > self.max_skew_seconds:
             raise WebhookSignatureError("Webhook timestamp is outside the accepted window")
         supplied = signature.removeprefix("sha256=")

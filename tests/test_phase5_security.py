@@ -6,6 +6,22 @@ from src.security.auth import require_workflow_api_key
 from src.security.webhooks import SQLiteReplayProtector, WebhookSignatureError, WebhookVerifier
 
 
+@pytest.mark.parametrize("skew", [True, -1, 0.5, float("nan"), float("inf"), "60"])
+def test_webhook_window_requires_nonnegative_integer_seconds(tmp_path, skew):
+    with pytest.raises(ValueError, match="max_skew_seconds"):
+        WebhookVerifier("secret", SQLiteReplayProtector(str(tmp_path / "replays.db")), max_skew_seconds=skew)
+
+
+@pytest.mark.parametrize("instant", [float("nan"), float("inf"), float("-inf"), True, "1000"])
+def test_invalid_webhook_clock_cannot_bypass_timestamp_window(tmp_path, instant):
+    protector = SQLiteReplayProtector(str(tmp_path / "replays.db"))
+    verifier = WebhookVerifier("secret", protector, clock=lambda: instant)
+    body, timestamp = b"{}", "1"
+    with pytest.raises(WebhookSignatureError, match="clock"):
+        verifier.verify(body, timestamp, verifier.sign(body, timestamp))
+    assert protector.check_and_record("probe", 1200, now=1000)
+
+
 def test_signed_webhook_detects_tampering_and_persistent_replay(tmp_path):
     path = str(tmp_path / "security.sqlite3")
     body = b'{"lead":"safe"}'
