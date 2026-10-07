@@ -22,6 +22,13 @@ class SQLiteReplayProtector:
 
     def check_and_record(self, replay_key: str, expires_at: float, *, now: float | None = None) -> bool:
         current = now if now is not None else time.time()
+        if not isinstance(replay_key, str) or not replay_key:
+            raise ValueError("replay_key must be a non-empty string")
+        for name, value in (("expires_at", expires_at), ("now", current)):
+            if isinstance(value, bool) or not isinstance(value, (int, float)) or not isfinite(value):
+                raise ValueError(f"{name} must be a finite number")
+        if expires_at <= current:
+            raise ValueError("expires_at must be in the future")
         with sqlite3.connect(self.path) as conn:
             conn.execute("DELETE FROM webhook_replays WHERE expires_at <= ?", (current,))
             try:

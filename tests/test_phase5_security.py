@@ -22,6 +22,24 @@ def test_invalid_webhook_clock_cannot_bypass_timestamp_window(tmp_path, instant)
     assert protector.check_and_record("probe", 1200, now=1000)
 
 
+@pytest.mark.parametrize(
+    "replay_key,expires_at,now",
+    [
+        ("", 1200, 1000),
+        (None, 1200, 1000),
+        ("key", float("nan"), 1000),
+        ("key", 1200, float("inf")),
+        ("key", 1000, 1000),
+        ("key", 999, 1000),
+    ],
+)
+def test_replay_store_rejects_malformed_or_expired_records(tmp_path, replay_key, expires_at, now):
+    protector = SQLiteReplayProtector(str(tmp_path / "replays.db"))
+    with pytest.raises(ValueError):
+        protector.check_and_record(replay_key, expires_at, now=now)
+    assert protector.check_and_record("valid", 1200, now=1000)
+
+
 def test_signed_webhook_detects_tampering_and_persistent_replay(tmp_path):
     path = str(tmp_path / "security.sqlite3")
     body = b'{"lead":"safe"}'
