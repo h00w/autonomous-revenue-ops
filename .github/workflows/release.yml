@@ -64,7 +64,7 @@ jobs:
           python scripts/verify_release_evidence.py release-evidence
           tar -czf "autonomous-revenue-ops-${GITHUB_REF_NAME}-evidence.tar.gz" release-evidence
       - name: Upload release evidence artifact
-        uses: actions/upload-artifact@v4
+        uses: actions/upload-artifact@v7
         with:
           name: release-evidence-${{ github.ref_name }}
           path: |
